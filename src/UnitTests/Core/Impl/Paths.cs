@@ -5,8 +5,6 @@ using System;
 using System.IO;
 using System.Text;
 using Microsoft.Common.Core;
-using Microsoft.Win32;
-using static System.FormattableString;
 
 namespace Microsoft.UnitTests.Core {
     public static class Paths {
@@ -16,9 +14,6 @@ namespace Microsoft.UnitTests.Core {
             get {
                 lock (_lock) {
                     if (_vsRoot == null) {
-#if VS14
-                        _vsRoot = (string)Registry.GetValue(Invariant($"HKEY_LOCAL_MACHINE\\SOFTWARE\\Microsoft\\VisualStudio\\{Toolset.Version}"), "InstallDir", string.Empty);
-#else
                         var buffer = new StringBuilder(512);
                         string ideFolder = @"Common7\IDE";
                         NativeMethods.GetModuleFileName(IntPtr.Zero, buffer, buffer.Capacity);
@@ -30,7 +25,6 @@ namespace Microsoft.UnitTests.Core {
                         }
 
                         _vsRoot = testRunnerFolder.Substring(0, index + ideFolder.Length);
-#endif
                     }
                     return _vsRoot;
                 }

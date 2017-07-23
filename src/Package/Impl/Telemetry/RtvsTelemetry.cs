@@ -7,13 +7,13 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Reflection;
-using Microsoft.Common.Core;
+using Microsoft.Common.Core.Services;
+using Microsoft.Common.Core.Shell;
 using Microsoft.Common.Core.Telemetry;
 using Microsoft.R.Components.Settings;
-using Microsoft.R.Editor.Settings;
+using Microsoft.R.Editor;
+using Microsoft.R.Editor.Functions;
 using Microsoft.R.Interpreters;
-using Microsoft.R.Support.Help;
-using Microsoft.R.Support.Settings;
 using Microsoft.VisualStudio.R.Package.Shell;
 using Microsoft.VisualStudio.R.Package.Telemetry.Data;
 using Microsoft.VisualStudio.R.Package.Telemetry.Definitions;
@@ -26,9 +26,10 @@ namespace Microsoft.VisualStudio.R.Package.Telemetry {
     /// Represents telemetry operations in RTVS
     /// </summary>
     internal sealed class RtvsTelemetry : IRtvsTelemetry {
-        private ToolWindowTracker _toolWindowTracker = new ToolWindowTracker();
+        private ToolWindowTracker _toolWindowTracker;
         private readonly IPackageIndex _packageIndex;
-        private static IRSettings _settings;
+        private readonly IRSettings _settings;
+        private readonly IREditorSettings _editorSettings;
 
         public static IRtvsTelemetry Current { get; set; }
 
@@ -56,16 +57,21 @@ namespace Microsoft.VisualStudio.R.Package.Telemetry {
             public const string ToolWindow = "Tool Window";
         }
 
-        public static void Initialize(IPackageIndex packageIndex, IRSettings settings, ITelemetryService service = null) {
+        public static void Initialize(IPackageIndex packageIndex, IServiceContainer services) {
             if (Current == null) {
-                Current = new RtvsTelemetry(packageIndex, settings, service);
+                var settings = services.GetService<IRSettings>();
+                var editorSettings = services.GetService<IREditorSettings>();
+                var telemetryService = services.GetService<ITelemetryService>();
+                Current = new RtvsTelemetry(packageIndex, settings, editorSettings, telemetryService, new ToolWindowTracker(services));
             }
         }
 
-        public RtvsTelemetry(IPackageIndex packageIndex, IRSettings settings, ITelemetryService service = null) {
+        public RtvsTelemetry(IPackageIndex packageIndex, IRSettings settings, IREditorSettings editorSettings, ITelemetryService telemetryService = null, ToolWindowTracker toolWindowTracker = null) {
             _packageIndex = packageIndex;
             _settings = settings;
-            TelemetryService = service ?? VsAppShell.Current.ExportProvider.GetExportedValue<ITelemetryService>();
+            _editorSettings = editorSettings;
+            TelemetryService = telemetryService;
+            _toolWindowTracker = toolWindowTracker;
         }
 
         public ITelemetryService TelemetryService { get; }
@@ -140,23 +146,23 @@ namespace Microsoft.VisualStudio.R.Package.Telemetry {
                 try {
                     TelemetryService.ReportEvent(TelemetryArea.Configuration, SettingEvents.Settings,
                             new {
-                                Cran = RToolsSettings.Current.CranMirror,
-                                Locale = RToolsSettings.Current.RCodePage,
-                                LoadRData = RToolsSettings.Current.LoadRDataOnProjectLoad,
-                                SaveRData = RToolsSettings.Current.SaveRDataOnProjectUnload,
-                                MultilineHistorySelection = RToolsSettings.Current.MultilineHistorySelection,
-                                AlwaysSaveHistory = RToolsSettings.Current.AlwaysSaveHistory,
-                                AutoFormat = REditorSettings.AutoFormat,
-                                CommitOnEnter = REditorSettings.CommitOnEnter,
-                                CommitOnSpace = REditorSettings.CommitOnSpace,
-                                FormatOnPaste = REditorSettings.FormatOnPaste,
-                                SendToReplOnCtrlEnter = REditorSettings.SendToReplOnCtrlEnter,
-                                ShowCompletionOnFirstChar = REditorSettings.ShowCompletionOnFirstChar,
-                                SignatureHelpEnabled = REditorSettings.SignatureHelpEnabled,
-                                CompletionEnabled = REditorSettings.CompletionEnabled,
-                                SyntaxCheckInRepl = REditorSettings.SyntaxCheckInRepl,
-                                PartialArgumentNameMatch = REditorSettings.PartialArgumentNameMatch,
-                                RCommandLineArguments = RToolsSettings.Current.LastActiveConnection.RCommandLineArguments
+                                Cran = _settings.CranMirror,
+                                Locale = _settings.RCodePage,
+                                LoadRData = _settings.LoadRDataOnProjectLoad,
+                                SaveRData = _settings.SaveRDataOnProjectUnload,
+                                MultilineHistorySelection = _settings.MultilineHistorySelection,
+                                AlwaysSaveHistory = _settings.AlwaysSaveHistory,
+                                AutoFormat = _editorSettings.AutoFormat,
+                                CommitOnEnter = _editorSettings.CommitOnEnter,
+                                CommitOnSpace = _editorSettings.CommitOnSpace,
+                                FormatOnPaste = _editorSettings.FormatOnPaste,
+                                SendToReplOnCtrlEnter = _editorSettings.SendToReplOnCtrlEnter,
+                                ShowCompletionOnFirstChar = _editorSettings.ShowCompletionOnFirstChar,
+                                SignatureHelpEnabled = _editorSettings.SignatureHelpEnabled,
+                                CompletionEnabled = _editorSettings.CompletionEnabled,
+                                SyntaxCheckInRepl = _editorSettings.SyntaxCheckInRepl,
+                                PartialArgumentNameMatch = _editorSettings.PartialArgumentNameMatch,
+                                RCommandLineArguments = _settings.LastActiveConnection?.RCommandLineArguments ?? string.Empty
                             });
                 } catch (Exception ex) {
                     Trace.Fail("Telemetry exception: " + ex.Message);

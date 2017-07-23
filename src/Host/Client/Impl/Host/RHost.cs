@@ -5,6 +5,7 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Threading;
@@ -12,9 +13,9 @@ using System.Threading.Tasks;
 using Microsoft.Common.Core;
 using Microsoft.Common.Core.Diagnostics;
 using Microsoft.Common.Core.Logging;
-using Microsoft.Common.Core.Shell;
 using Microsoft.Common.Core.Tasks;
 using Microsoft.Common.Core.Threading;
+using Microsoft.Common.Core.UI;
 using Microsoft.R.Host.Client.Host;
 using Microsoft.R.Host.Protocol;
 using Newtonsoft.Json.Linq;
@@ -147,13 +148,27 @@ namespace Microsoft.R.Host.Client {
             tcs?.TrySetResult(true);
         }
 
+        private async Task ShowLocalizedDialogFormat(Message request, MessageButtons buttons, CancellationToken ct) {
+            TaskUtilities.AssertIsOnBackgroundThread();
+            var response = await ShowDialog(new RContext[0], GetLocalizedString(request), buttons, ct);
+            await RespondAsync(request, ct, response);
+        }
+
         private async Task ShowDialog(Message request, MessageButtons buttons, CancellationToken ct) {
             TaskUtilities.AssertIsOnBackgroundThread();
+
             request.ExpectArguments(2);
             var contexts = GetContexts(request);
             var s = request.GetString(1, "s", allowNull: true);
 
-            MessageButtons input = await _callbacks.ShowDialog(contexts, s, buttons, ct);
+            var response = await ShowDialog(contexts, s, buttons, ct);
+            await RespondAsync(request, ct, response);
+        }
+
+        private async Task<string> ShowDialog(RContext[] contexts, string message, MessageButtons buttons, CancellationToken ct) {
+            TaskUtilities.AssertIsOnBackgroundThread();
+
+            MessageButtons input = await _callbacks.ShowDialog(contexts, message, buttons, ct);
             ct.ThrowIfCancellationRequested();
 
             string response;
@@ -173,8 +188,7 @@ namespace Microsoft.R.Host.Client {
                         throw new InvalidOperationException(error);
                     }
             }
-
-            await RespondAsync(request, ct, response);
+            return response;
         }
 
         private async Task ReadConsole(Message request, CancellationToken ct) {
@@ -446,6 +460,24 @@ namespace Microsoft.R.Host.Client {
                                     .DoNotWait();
                                 break;
 
+                            case "?LocYesNoCancel":
+                                ShowLocalizedDialogFormat(message, MessageButtons.YesNoCancel, ct)
+                                    .SilenceException<MessageTransportException>()
+                                    .DoNotWait();
+                                break;
+
+                            case "?LocYesNo":
+                                ShowLocalizedDialogFormat(message, MessageButtons.YesNo, ct)
+                                    .SilenceException<MessageTransportException>()
+                                    .DoNotWait();
+                                break;
+
+                            case "?LocOkCancel":
+                                ShowLocalizedDialogFormat(message, MessageButtons.OKCancel, ct)
+                                    .SilenceException<MessageTransportException>()
+                                    .DoNotWait();
+                                break;
+
                             case "?>":
                                 ReadConsole(message, ct)
                                     .SilenceException<MessageTransportException>()
@@ -491,6 +523,14 @@ namespace Microsoft.R.Host.Client {
                                     ct).DoNotWait();
                                 break;
 
+                            case "?EditFile":
+                                message.ExpectArguments(2);
+                                // Opens file in editor and blocks until file is closed.
+                                var content = await _callbacks.EditFileAsync(message.GetString(0, "name", allowNull: true), message.GetString(1, "file", allowNull: true), ct);
+                                ct.ThrowIfCancellationRequested();
+                                await RespondAsync(message, ct, content);
+                                break;
+
                             case "!View":
                                 message.ExpectArguments(2);
                                 _callbacks.ViewObject(message.GetString(0, "x"), message.GetString(1, "title"), ct)
@@ -532,8 +572,16 @@ namespace Microsoft.R.Host.Client {
                                     .DoNotWait();
                                 break;
 
-                            case "!PackagesInstalled":
-                                _callbacks.PackagesInstalled();
+                            case "?BeforePackagesInstalled":
+                                await _callbacks.BeforePackagesInstalledAsync(ct);
+                                ct.ThrowIfCancellationRequested();
+                                await RespondAsync(message, ct, true);
+                                break;
+
+                            case "?AfterPackagesInstalled":
+                                await _callbacks.AfterPackagesInstalledAsync(ct);
+                                ct.ThrowIfCancellationRequested();
+                                await RespondAsync(message, ct, true);
                                 break;
 
                             case "!PackagesRemoved":
@@ -552,8 +600,12 @@ namespace Microsoft.R.Host.Client {
                                 }).DoNotWait();
                                 break;
 
-                            case "?LocStr":
-                                await RespondAsync(message, ct, _callbacks.GetLocalizedString(message.GetString(0, "id")));
+                            case "!LocMessage":
+                                _callbacks.WriteConsoleEx(GetLocalizedString(message) + Environment.NewLine, OutputType.Output, ct).DoNotWait();
+                                break;
+
+                            case "!LocWarning":
+                                _callbacks.WriteConsoleEx(GetLocalizedString(message) + Environment.NewLine, OutputType.Error, ct).DoNotWait();
                                 break;
 
                             default:
@@ -576,6 +628,15 @@ namespace Microsoft.R.Host.Client {
             }
 
             return null;
+        }
+
+        private string GetLocalizedString(Message message) {
+            var s = _callbacks.GetLocalizedString(message.GetString(0, "id"));
+            if (message.ArgumentCount == 2) {
+                var args = message.GetArgument(1, "a", JTokenType.Array).Select(o => o.Value<object>()).ToArray();
+                s = string.Format(CultureInfo.CurrentCulture, s, args);
+            }
+            return s;
         }
 
         private CancellationToken UpdateCancelAllCtsLink(ref CancellationTokenSource cancelAllCtsLink, CancellationToken loopCt) {
@@ -660,6 +721,6 @@ namespace Microsoft.R.Host.Client {
             Interlocked.Exchange(ref _callbacks, new NullRCallbacks());
         }
 
-        internal Task GetRHostRunTask() => _runTask;
+        public Task GetRHostRunTask() => _runTask;
     }
 }

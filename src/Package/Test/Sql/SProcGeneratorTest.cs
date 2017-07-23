@@ -22,22 +22,19 @@ namespace Microsoft.VisualStudio.R.Package.Test.Sql {
         private const string sqlProjectName = "db.sqlproj";
 
         private readonly PackageTestFilesFixture _files;
-        private readonly ICoreShell _coreShell;
         private readonly IProjectSystemServices _pss;
         private readonly EnvDTE.Project _project;
 
         public SProcGeneratorTest(PackageTestFilesFixture files) {
             _files = files;
-            _coreShell = Substitute.For<ICoreShell>();
             _pss = Substitute.For<IProjectSystemServices>();
-
             _project = Substitute.For<EnvDTE.Project>();
             _project.FullName.Returns(Path.Combine(_files.DestinationPath, sqlProjectName));
         }
 
         [Test]
         public void GenerateEmpty() {
-            var fs = new FileSystem();
+            var fs = new WindowsFileSystem();
             var g = new SProcProjectFilesGenerator(_pss, fs);
             var settings = new SqlSProcPublishSettings();
             g.Generate(settings, Enumerable.Empty<string>(), _project);
@@ -49,7 +46,7 @@ namespace Microsoft.VisualStudio.R.Package.Test.Sql {
         [InlineData("sqlcode2.r", RCodePlacement.Inline, SqlQuoteType.Bracket, "a b")]
         [InlineData("sqlcode2.r", RCodePlacement.Table, SqlQuoteType.Quote, "a b")]
         public void Generate(string rFile, RCodePlacement codePlacement, SqlQuoteType quoteType, string sprocName) {
-            var fs = new FileSystem();
+            var fs = new WindowsFileSystem();
             var settings = new SqlSProcPublishSettings();
             var g = new SProcProjectFilesGenerator(_pss, fs);
 

@@ -3,7 +3,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.ComponentModel.Composition;
 using System.Linq;
 using System.Text;
 using Microsoft.Common.Core;
@@ -18,14 +17,15 @@ namespace Microsoft.R.Host.Broker.Interpreters {
         private readonly ROptions _options;
         private readonly ILogger _logger;
         private readonly IFileSystem _fs;
+        private readonly IRInstallationService _installationService;
 
         public IReadOnlyCollection<Interpreter> Interpreters { get; private set; }
 
-        [ImportingConstructor]
-        public InterpreterManager(IOptions<ROptions> options, ILogger<InterpreterManager> logger, IFileSystem fs) {
+        public InterpreterManager(IFileSystem fs, IRInstallationService installationService, IOptions<ROptions> options, ILogger<InterpreterManager> logger) {
             _options = options.Value;
             _logger = logger;
             _fs = fs;
+            _installationService = installationService;
         }
 
         public void Initialize() {
@@ -42,11 +42,11 @@ namespace Microsoft.R.Host.Broker.Interpreters {
             if (_options.AutoDetect) {
                 _logger.LogTrace(Resources.Trace_AutoDetectingR);
 
-                var engines = new RInstallation().GetCompatibleEngines().AsList();
+                var engines = _installationService.GetCompatibleEngines().AsList();
                 if (engines.Any()) {
                     var interpreterId = 0;
                     foreach (var e in engines) {
-                        var detected = new Interpreter(this, Invariant($"{interpreterId++}"), e.Name, e.InstallPath, e.BinPath, e.Version);
+                        var detected = new Interpreter(this, Invariant($"{interpreterId++}"), e);
                         _logger.LogTrace(Resources.Trace_DetectedR, detected.Version, detected.Path);
                         yield return detected;
                     }
@@ -60,9 +60,9 @@ namespace Microsoft.R.Host.Broker.Interpreters {
                 InterpreterOptions options = kv.Value;
 
                 if (!string.IsNullOrEmpty(options.BasePath) && _fs.DirectoryExists(options.BasePath)) {
-                    var interpInfo = new RInterpreterInfo(string.Empty, options.BasePath);
-                    if (interpInfo.VerifyInstallation()) {
-                        yield return new Interpreter(this, id, options.Name, interpInfo.InstallPath, interpInfo.BinPath, interpInfo.Version);
+                    var interpInfo = _installationService.CreateInfo(string.Empty, options.BasePath);
+                    if (interpInfo != null && interpInfo.VerifyInstallation()) {
+                        yield return new Interpreter(this, id, options.Name, interpInfo);
                         continue;
                     }
                 }

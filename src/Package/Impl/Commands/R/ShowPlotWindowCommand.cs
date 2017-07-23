@@ -6,23 +6,23 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.Common.Core.Shell;
 using Microsoft.Common.Core.UI.Commands;
 using Microsoft.R.Components.InteractiveWorkflow;
 using Microsoft.R.Components.Plots;
-using Microsoft.VisualStudio.R.Package.Shell;
 using Microsoft.VisualStudio.R.Package.ToolWindows;
 using Microsoft.VisualStudio.R.Package.Utilities;
 using Microsoft.VisualStudio.Shell.Interop;
 
 namespace Microsoft.VisualStudio.R.Package.Commands {
     public class ShowPlotWindowCommand : IAsyncCommandRange {
-        private readonly IRPlotManager _plotManager;
+        private readonly IRPlotManagerVisual _plotManager;
         private readonly IVsUIShell4 _shell;
         private PlotWindowResult[] _windows;
 
-        public ShowPlotWindowCommand(IApplicationShell appShell, IRInteractiveWorkflow workflow) {
-            _plotManager = workflow.Plots;
-            _shell = appShell.GetGlobalService<IVsUIShell4>(typeof(SVsUIShell));
+        public ShowPlotWindowCommand(ICoreShell shell, IRInteractiveWorkflow workflow) {
+            _plotManager = workflow.Plots as IRPlotManagerVisual;
+            _shell = shell.GetService<IVsUIShell4>(typeof(SVsUIShell));
         }
 
         public CommandStatus GetStatus(int index) {

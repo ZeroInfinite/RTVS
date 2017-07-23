@@ -1,19 +1,13 @@
 ﻿// Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License. See LICENSE in the project root for license information.
 
-using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.Build.Evaluation;
 using Microsoft.Common.Core;
-using Microsoft.VisualStudio.ProjectSystem;
 using Microsoft.VisualStudio.Threading;
-#if VS14
-using Microsoft.VisualStudio.ProjectSystem.Items;
-using Microsoft.VisualStudio.ProjectSystem.Utilities;
-#endif
 using ItemData = System.Tuple<string, string, System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string, string>>>;
 
 namespace Microsoft.VisualStudio.ProjectSystem.FileSystemMirroring.Project {

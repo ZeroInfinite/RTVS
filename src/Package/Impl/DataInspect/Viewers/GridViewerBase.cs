@@ -5,8 +5,9 @@ using System;
 using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
-using EnvDTE;
+using Microsoft.Common.Core.Services;
 using Microsoft.Common.Core.Shell;
+using Microsoft.Common.Core.Threading;
 using Microsoft.R.DataInspection;
 using Microsoft.VisualStudio.R.Package.Shell;
 using Microsoft.VisualStudio.R.Package.Utilities;
@@ -19,11 +20,10 @@ namespace Microsoft.VisualStudio.R.Package.DataInspect.Viewers {
         private const REvaluationResultProperties _properties =
            ClassesProperty | ExpressionProperty | TypeNameProperty | DimProperty | LengthProperty;
 
-        private readonly IObjectDetailsViewerAggregator _aggregator;
+        private readonly IServiceContainer _services;
 
-        public GridViewerBase(IObjectDetailsViewerAggregator aggregator, IDataObjectEvaluator evaluator) :
-            base(evaluator) {
-            _aggregator = aggregator;
+        public GridViewerBase(IServiceContainer services, IDataObjectEvaluator evaluator) : base(evaluator) {
+            _services = services;
         }
 
         #region IObjectDetailsViewer
@@ -34,7 +34,7 @@ namespace Microsoft.VisualStudio.R.Package.DataInspect.Viewers {
         public async Task ViewAsync(string expression, string title, CancellationToken cancellationToken = default(CancellationToken)) {
             var evaluation = await EvaluateAsync(expression, _properties, RValueRepresentations.Str(), cancellationToken);
             if (evaluation != null) {
-                await VsAppShell.Current.SwitchToMainThreadAsync(cancellationToken);
+                await _services.MainThread().SwitchToAsync(cancellationToken);
                 var id = Math.Abs(_toolWindowIdBase + expression.GetHashCode() % (Int32.MaxValue - _toolWindowIdBase));
 
                 var pane = ToolWindowUtilities.FindWindowPane<VariableGridWindowPane>(id);
@@ -47,7 +47,7 @@ namespace Microsoft.VisualStudio.R.Package.DataInspect.Viewers {
                 }
 
                 title = !string.IsNullOrEmpty(title) ? title : evaluation.Expression;
-                pane.SetEvaluation(new VariableViewModel(evaluation, _aggregator), title);
+                pane.SetEvaluation(new VariableViewModel(evaluation, _services), title);
             }
         }
         #endregion

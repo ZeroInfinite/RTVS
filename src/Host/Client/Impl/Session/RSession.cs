@@ -6,22 +6,20 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Reflection;
-using System.Runtime.InteropServices;
-using System.Runtime.Serialization;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Threading.Tasks.Dataflow;
 using Microsoft.Common.Core;
 using Microsoft.Common.Core.Disposables;
 using Microsoft.Common.Core.Logging;
-using Microsoft.Common.Core.Shell;
 using Microsoft.Common.Core.Tasks;
 using Microsoft.Common.Core.Threading;
+using Microsoft.Common.Core.UI;
 using Microsoft.R.Host.Client.Host;
 using static System.FormattableString;
 
 namespace Microsoft.R.Host.Client.Session {
-    internal sealed class RSession : IRSession, IRCallbacks {
+    public sealed class RSession : IRSession, IRCallbacks {
         private static readonly string RemotePromptPrefix = "\u26b9";
         private static readonly string DefaultPrompt = "> ";
 
@@ -60,6 +58,7 @@ namespace Microsoft.R.Host.Client.Session {
         private volatile bool _delayedMutatedOnReadConsole;
         private volatile IRSessionCallback _callback;
         private volatile RHostStartupInfo _startupInfo;
+        private readonly CountdownDisposable _readUserInputReentrancyCounter = new CountdownDisposable();
 
         public int Id { get; }
         public string Name { get; }
@@ -68,6 +67,9 @@ namespace Microsoft.R.Host.Client.Session {
         public bool IsHostRunning => _isHostRunning;
         public Task HostStarted => _hostStartedTcs.Task;
         public bool IsRemote => BrokerClient.IsRemote;
+        public bool IsProcessing { get; private set; }
+        public bool IsReadingUserInput => _readUserInputReentrancyCounter.Count > 0;
+
         public bool RestartOnBrokerSwitch { get; set; }
 
         internal IBrokerClient BrokerClient { get; }
@@ -77,7 +79,7 @@ namespace Microsoft.R.Host.Client.Session {
         /// For testing purpose only
         /// Do not expose this property to the IRSession interface
         /// </summary> 
-        internal RHost RHost => _host;
+        public RHost RHost => _host;
 
         static RSession() {
             CanceledBeginInteractionTask = TaskUtilities.CreateCanceled<IRSessionInteraction>(new RHostDisconnectedException());
@@ -392,11 +394,12 @@ namespace Microsoft.R.Host.Client.Session {
         private async Task AfterHostStarted(RHostStartupInfo startupInfo) {
             var evaluator = new BeforeInitializedRExpressionEvaluator(this);
             try {
-                // Load RTVS R package before doing anything in R since the calls
-                // below calls may depend on functions exposed from the RTVS package
-                var libPath = IsRemote ? "." : Path.GetDirectoryName(Assembly.GetExecutingAssembly().GetAssemblyPath());
+                await LoadRtvsPackage(evaluator, IsRemote);
 
-                await LoadRtvsPackage(evaluator, libPath);
+                var suggest_mro = await evaluator.EvaluateAsync<bool>("!exists('Revo.version')", REvaluationKind.Normal);
+                if (suggest_mro) {
+                    await WriteOutputAsync(Resources.Message_SuggestMRO);
+                }
 
                 var wd = startupInfo.WorkingDirectory;
                 if (!IsRemote && !string.IsNullOrEmpty(wd)) {
@@ -407,6 +410,14 @@ namespace Microsoft.R.Host.Client.Session {
                     }
                 } else {
                     await evaluator.SetDefaultWorkingDirectoryAsync();
+                }
+
+                if (!startupInfo.IsInteractive || IsRemote) {
+                    // If session is non-interactive (such as intellisense) or it is remote
+                    // we need to set up UI suppression overrides.
+                    try {
+                        await SuppressUI(evaluator);
+                    } catch (REvaluationException) { }
                 }
 
                 var callback = _callback;
@@ -478,8 +489,12 @@ namespace Microsoft.R.Host.Client.Session {
 
         private const int rtvsPackageVersion = 1;
 
-        private static Task LoadRtvsPackage(IRExpressionEvaluator eval, string libPath) {
-            return eval.ExecuteAsync(Invariant($@"
+        private static async Task LoadRtvsPackage(IRExpressionEvaluator eval, bool isRemote) {
+            // Load RTVS R package before doing anything in R since the calls
+            // below calls may depend on functions exposed from the RTVS package
+            var libPath = isRemote ? await GetRemoteRtvsPackagePath(eval) : Path.GetDirectoryName(typeof(RHost).GetTypeInfo().Assembly.GetAssemblyPath());
+
+            await eval.ExecuteAsync(Invariant($@"
 if (!base::isNamespaceLoaded('rtvs')) {{
     base::loadNamespace('rtvs', lib.loc = {libPath.ToRStringLiteral()})
 }}
@@ -487,6 +502,18 @@ if (rtvs:::version != {rtvsPackageVersion}) {{
     warning('This R session was created using an incompatible version of RTVS, and may misbehave or crash when used with this version. Click ""Reset"" to replace it with a new clean session.');
 }}
 "));
+        }
+
+        private static async Task<string> GetRemoteRtvsPackagePath(IRExpressionEvaluator eval) {
+            const string windowsPath = ".";
+            const string unixPath = "/usr/share/rtvs";
+            return await eval.IsRSessionPlatformWindowsAsync() ? windowsPath : unixPath;
+        }
+
+        private static Task SuppressUI(IRExpressionEvaluator eval) {
+            // # Suppress Windows UI 
+            // http://astrostatistics.psu.edu/datasets/R/html/utils/html/winMenus.html
+            return eval.ExecuteAsync(@"rtvs:::suppress_ui()");
         }
 
         public void FlushLog() {
@@ -538,7 +565,9 @@ if (rtvs:::version != {rtvsPackageVersion}) {{
 
             var callback = _callback;
             if (!addToHistory && callback != null) {
-                return await callback.ReadUserInput(prompt, len, ct);
+                using (_readUserInputReentrancyCounter.Increment()) {
+                    return await callback.ReadUserInput(prompt, len, ct);
+                }
             }
 
             var currentRequest = Interlocked.Exchange(ref _currentRequestSource, null);
@@ -547,6 +576,7 @@ if (rtvs:::version != {rtvsPackageVersion}) {{
             Prompt = GetDefaultPrompt(prompt);
             MaxLength = len;
 
+            IsProcessing = contexts.Count != 1;
             var requestEventArgs = new RBeforeRequestEventArgs(contexts, Prompt, len, addToHistory);
             BeforeRequest?.Invoke(this, requestEventArgs);
 
@@ -578,6 +608,7 @@ if (rtvs:::version != {rtvsPackageVersion}) {{
 
             consoleInput = consoleInput.EnsureLineBreak();
             AfterRequest?.Invoke(this, new RAfterRequestEventArgs(contexts, Prompt, consoleInput, addToHistory, currentRequest?.IsVisible ?? false));
+            IsProcessing = true;
 
             return consoleInput;
         }
@@ -609,6 +640,13 @@ if (rtvs:::version != {rtvsPackageVersion}) {{
 
         private Task WriteErrorAsync(string format, params object[] args) =>
             WriteErrorAsync(format.FormatCurrent(args));
+
+        private async Task WriteOutputAsync(string text) {
+            await ((IRCallbacks)this).WriteConsoleEx(text + "\n", OutputType.Output, CancellationToken.None);
+        }
+
+        private Task WriteOutputAsync(string format, params object[] args) =>
+            WriteOutputAsync(format.FormatCurrent(args));
 
         Task IRCallbacks.WriteConsoleEx(string buf, OutputType otype, CancellationToken ct) {
             Output?.Invoke(this, new ROutputEventArgs(otype, buf));
@@ -706,6 +744,11 @@ if (rtvs:::version != {rtvsPackageVersion}) {{
             return callback?.ViewFile(fileName, tabName, deleteFile, cancellationToken);
         }
 
+        Task<string> IRCallbacks.EditFileAsync(string content, string fileName, CancellationToken cancellationToken) {
+            var callback = _callback;
+            return callback?.EditFileAsync(content, fileName, cancellationToken);
+        }
+
         void IRCallbacks.DirectoryChanged() {
             if (_processingChangeDirectoryCommand) {
                 DirectoryChanged?.Invoke(this, EventArgs.Empty);
@@ -718,8 +761,15 @@ if (rtvs:::version != {rtvsPackageVersion}) {{
             return callback?.ViewObjectAsync(obj, title, cancellationToken) ?? Task.CompletedTask;
         }
 
-        void IRCallbacks.PackagesInstalled() {
+        Task IRCallbacks.BeforePackagesInstalledAsync(CancellationToken cancellationToken) {
+            var callback = _callback;
+            return callback.BeforePackagesInstalledAsync(cancellationToken);
+        }
+
+        Task IRCallbacks.AfterPackagesInstalledAsync(CancellationToken cancellationToken) {
             PackagesInstalled?.Invoke(this, EventArgs.Empty);
+            var callback = _callback;
+            return callback.AfterPackagesInstalledAsync(cancellationToken);
         }
 
         void IRCallbacks.PackagesRemoved() {
@@ -805,7 +855,6 @@ if (rtvs:::version != {rtvsPackageVersion}) {{
 
         // A custom exception type for the sole purpose of distinguishing cancellation of ReadConsole
         // due to CancelAllAsync from all other cases, and special handling of the former.
-        [Serializable]
         private class CancelAllException : OperationCanceledException {
             public CancelAllException() { }
 
@@ -819,7 +868,7 @@ if (rtvs:::version != {rtvsPackageVersion}) {{
 
             public CancelAllException(string message, Exception innerException, CancellationToken token) : base(message, innerException, token) { }
 
-            protected CancelAllException(SerializationInfo info, StreamingContext context) : base(info, context) { }
+            //protected CancelAllException(SerializationInfo info, StreamingContext context) : base(info, context) { }
         }
     }
 }

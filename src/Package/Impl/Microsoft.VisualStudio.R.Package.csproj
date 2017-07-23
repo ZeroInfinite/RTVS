@@ -1,8 +1,8 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="14.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
-  <Import Project="..\..\R.Settings.targets" />
-  <Import Project="$(NuGetPackageRoot)\Microsoft.VSSDK.BuildTools\14.3.25420\tools\vssdk\Microsoft.VsSDK.props" Condition="'$(VisualStudioVersion)'=='14.0' AND Exists('$(NuGetPackageRoot)\Microsoft.VSSDK.BuildTools\14.3.25420\tools\vssdk\Microsoft.VsSDK.props')" />
+  <Import Project="..\..\R.Settings.props" />
+  <Import Project="$(NuGetPackageRoot)\Microsoft.VSSDK.BuildTools\15.0.26201\tools\vssdk\Microsoft.VsSDK.props" Condition="'$(VisualStudioVersion)'=='15.0' AND Exists('$(NuGetPackageRoot)\Microsoft.VSSDK.BuildTools\15.0.26201\tools\vssdk\Microsoft.VsSDK.props')" />
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
@@ -53,28 +53,19 @@
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
   <PropertyGroup>
-    <DefineConstants Condition="'$(VisualStudioVersion)'=='14.0'">VS14;$(DefineConstants)</DefineConstants>
     <DefineConstants Condition="'$(VisualStudioVersion)'=='15.0'">VS15;$(DefineConstants)</DefineConstants>
-    <VSCTDefinitions Condition="'$(VisualStudioVersion)'=='14.0'">VS14;$(VSCTDefinitions)</VSCTDefinitions>
     <VSCTDefinitions Condition="'$(VisualStudioVersion)'=='15.0'">VS15;$(VSCTDefinitions)</VSCTDefinitions>
-    <PreBuildEvent>
+    <!--<PreBuildEvent>
       "$(MSBuildProjectDirectory)\UpdateReferences.cmd" "$(MSBuildProjectDirectory)" $(VisualStudioVersion)
-    </PreBuildEvent>
+    </PreBuildEvent>-->
   </PropertyGroup>
-  <!--
-    <ItemGroup Condition="'$(VisualStudioVersion)'=='14.0'" >
-    <Reference Include="Microsoft.Build, Version=14.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL" />
-    <Reference Include="$(LibDirectory)\$(VisualStudioVersion)\Microsoft.VisualStudio.ProjectSystem.Interop.dll" />
-    <Reference Include="$(LibDirectory)\$(VisualStudioVersion)\Microsoft.VisualStudio.ProjectSystem.V14Only.dll" />
-    <Reference Include="$(LibDirectory)\$(VisualStudioVersion)\Microsoft.VisualStudio.ProjectSystem.VS.V14Only.dll" />
-    <Reference Include="$(LibDirectory)\$(VisualStudioVersion)\Microsoft.VisualStudio.ProjectSystem.Utilities.v14.0.dll" />
-  </ItemGroup>
-  -->
   <ItemGroup>
+    <Compile Include="..\..\AssemblyVersionInfo.cs">
+      <Link>Properties\AssemblyVersionInfo.cs</Link>
+    </Compile>
     <Compile Include="..\..\GlobalAssemblyInfo.cs">
       <Link>Properties\GlobalAssemblyInfo.cs</Link>
     </Compile>
-    <Compile Include="Browsers\WebBrowserRole.cs" />
     <Compile Include="Commands\AsyncCommandController.cs" />
     <Compile Include="Commands\AsyncCommandRangeToOleMenuCommandShim.cs" />
     <Compile Include="Commands\CommandAsyncToOleMenuCommandShim.cs" />
@@ -85,6 +76,9 @@
     <Compile Include="Commands\SessionCommand.cs" />
     <Compile Include="DataInspect\Commands\DeleteAllVariablesCommand.cs" />
     <Compile Include="DataInspect\Commands\SessionCommand.cs" />
+    <Compile Include="DataInspect\Commands\CopyVariableCommand.cs" />
+    <Compile Include="DataInspect\Commands\CopyVariableValueCommand.cs" />
+    <Compile Include="DataInspect\Commands\VariableCommandBase.cs" />
     <Compile Include="DataInspect\DataImport\EnterUrl.xaml.cs">
       <DependentUpon>EnterUrl.xaml</DependentUpon>
     </Compile>
@@ -109,17 +103,21 @@
     <Compile Include="DataInspect\DataSource\GridRange.cs" />
     <Compile Include="DataInspect\Definitions\ViewerCapabilities.cs" />
     <Compile Include="DataInspect\Definitions\REnvironmentKind.cs" />
+    <Compile Include="DataInspect\Commands\DeleteVariableCommand.cs" />
     <Compile Include="DataInspect\Office\CsvAppFileIO.cs" />
     <Compile Include="DataInspect\Definitions\IREnvironment.cs" />
+    <Compile Include="DataInspect\Commands\OpenVariableInCsvCommand.cs" />
     <Compile Include="DataInspect\REnvironment.cs" />
     <Compile Include="DataInspect\REnvironmentsChangedEventArgs.cs" />
     <Compile Include="DataInspect\REnvironmentProvider.cs" />
     <Compile Include="DataInspect\GridData.cs" />
     <Compile Include="DataInspect\GridHeader.cs" />
     <Compile Include="DataInspect\GridDataProvider.cs" />
+    <Compile Include="DataInspect\Commands\ShowVariableDetailsCommand.cs" />
     <Compile Include="DataInspect\TreeGrid\TreeGrid.cs" />
     <Compile Include="DataInspect\VariableSearchTask.cs" />
     <Compile Include="DataInspect\Viewers\DebugObjectEvaluator.cs" />
+    <Compile Include="DataInspect\Viewers\FileEditor.cs" />
     <Compile Include="DataInspect\Viewers\FileViewer.cs" />
     <Compile Include="DataInspect\Viewers\CodeViewer.cs" />
     <Compile Include="DataInspect\Viewers\GridViewerBase.cs" />
@@ -146,13 +144,10 @@
     <Compile Include="DataInspect\VisualGrid\ThumbTrack.cs" />
     <Compile Include="DataInspect\VisualGrid\VisualGrid.cs" />
     <Compile Include="DataInspect\VisualGrid\VisualGridScroller.cs" />
-    <Compile Include="Debugger\Commands\ShowDotPrefixedVariablesCommand.cs" />
     <Compile Include="Debugger\DataTips\DataTipTextViewFilter.cs" />
     <Compile Include="Debugger\DataTips\DataTipTextViewConnectionListener.cs" />
     <Compile Include="Editors\BaseLanguageService.cs" />
     <Compile Include="Editors\LanguageSettingsStorage.cs" />
-    <Compile Include="Editors\LanguageSettingsStorageWithDialog.cs" />
-    <Compile Include="Editors\VsREditorSettingsStorage.cs" />
     <Compile Include="Expansions\SnippetInformationSourceProvider.cs" />
     <Compile Include="Feedback\ReportIssueCommand.cs" />
     <Compile Include="Commands\R\InstallRClientCommand.cs" />
@@ -189,23 +184,40 @@
     <Compile Include="Help\ShowHelpOnCurrentCommand.cs" />
     <Compile Include="History\Commands\CopySelectedHistoryCommand.cs" />
     <Compile Include="History\Commands\HistoryWindowVsStd2KCmdIdDown.cs" />
+    <Compile Include="History\Commands\HistoryWindowVsStd2KCmdIdDownExt.cs" />
     <Compile Include="History\Commands\HistoryWindowVsStd2KCmdIdEnd.cs" />
     <Compile Include="History\Commands\HistoryWindowVsStd2KCmdIdHome.cs" />
+    <Compile Include="History\Commands\HistoryWindowVsStd2KCmdIdLeftExt.cs" />
     <Compile Include="History\Commands\HistoryWindowVsStd2KCmdIdPageDown.cs" />
     <Compile Include="History\Commands\HistoryWindowVsStd2KCmdIdPageUp.cs" />
     <Compile Include="History\Commands\HistoryWindowVsStd2KCmdIdReturnCommand.cs" />
+    <Compile Include="History\Commands\HistoryWindowVsStd2KCmdIdRightExt.cs" />
     <Compile Include="History\Commands\HistoryWindowVsStd2KCmdIdUp.cs" />
+    <Compile Include="History\Commands\HistoryWindowVsStd2KCmdIdUpExt.cs" />
     <Compile Include="History\Commands\HistoryWindowVsStd97CmdIdSelectAllCommand.cs" />
     <Compile Include="History\Commands\LoadHistoryCommand.cs" />
     <Compile Include="History\Commands\NavigationCommandBase.cs" />
     <Compile Include="History\Commands\SaveHistoryCommand.cs" />
     <Compile Include="History\Commands\SendHistoryToReplCommand.cs" />
     <Compile Include="History\Commands\SendHistoryToSourceCommand.cs" />
+    <Compile Include="InfoBar\InfoBarEvents.cs" />
+    <Compile Include="InfoBar\VsInfoBar.cs" />
+    <Compile Include="InfoBar\VsInfoBarProvider.cs" />
+    <Compile Include="Imaging\ImageService.cs" />
     <Compile Include="Options\Attributes\BrowserTypeConverter.cs" />
+    <Compile Include="Options\Attributes\PreviewPositionTypeConverter.cs" />
     <Compile Include="Options\Attributes\YesNoTypeConverter.cs" />
+    <Compile Include="Options\Markdown\REditorSettingsStorageProvider.cs" />
     <Compile Include="Options\PackageManager\PackageSourceOptionsPage.cs">
       <SubType>Component</SubType>
     </Compile>
+    <Compile Include="Options\Markdown\RMarkdownOptionsDialog.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Include="Options\R\Editor\RLintOptionsDialog.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Include="Options\R\Editor\REditorSettingsStorageProvider.cs" />
     <Compile Include="Options\R\Tools\BrowserForFolderUIEditor.cs" />
     <Compile Include="Options\R\Tools\LogVerbosityTypeConverter.cs" />
     <Compile Include="Options\R\Tools\EncodingTypeConverter.cs" />
@@ -229,10 +241,22 @@
       <DesignTime>True</DesignTime>
       <DependentUpon>Resources.resx</DependentUpon>
     </Compile>
-    <Compile Include="Shell\ApplicationConstants.cs" />
-    <Compile Include="Shell\VsFileDialog.cs" />
-    <Compile Include="Shell\VsProgressDialog.cs" />
-    <Compile Include="Shell\VsTaskService.cs" />
+    <Compile Include="Shell\CompositionCatalog.cs" />
+    <Compile Include="Shell\Services\VsApplication.cs" />
+    <Compile Include="Shell\VsAppShell.Test.cs" />
+    <Compile Include="Shell\VsAppShell.Lifetime.cs" />
+    <Compile Include="Shell\Editor\VsEditorSupport.cs" />
+    <Compile Include="Shell\Services\VsMainThread.cs" />
+    <Compile Include="Shell\Services\VsPlatformServices.cs" />
+    <Compile Include="Shell\Services\VsUIServices.cs" />
+    <Compile Include="Shell\VsAppShell.Idle.cs" />
+    <Compile Include="Shell\VsAppShell.Services.cs" />
+    <Compile Include="Shell\Services\VsFileDialog.cs" />
+    <Compile Include="Shell\Services\VsProgressDialog.cs" />
+    <Compile Include="Shell\Services\VsServiceManager.cs" />
+    <Compile Include="Shell\Services\VsTaskService.cs" />
+    <Compile Include="Shell\Editor\VsEditorUndoAction.cs" />
+    <Compile Include="Shell\VsEditorViewLocator.cs" />
     <Compile Include="Sql\Services\DacPackageServicesProvider.cs" />
     <Compile Include="ToolWindows\PlotHistoryWindowPane.cs" />
     <Compile Include="ProjectSystem\Commands\CopyRemoteItemPathCommand.cs" />
@@ -296,7 +320,6 @@
     <Compile Include="ProjectSystem\PropertyPages\PropertyPageProvider.cs" />
     <Compile Include="ProjectSystem\RDebugLaunchProvider.cs" />
     <Compile Include="ProjectSystem\WorkspaceServices.cs" />
-    <Compile Include="RClient\MicrosoftRClient.cs" />
     <Compile Include="RClient\MicrosoftRClientInstaller.cs" />
     <Compile Include="Repl\Commands\Directory\SetDirectoryToProjectCommand.cs" />
     <Compile Include="Repl\Commands\Directory\SetDirectoryToSourceCommand.cs" />
@@ -307,7 +330,7 @@
     <Compile Include="Repl\Shiny\RunShinyAppCommand.cs" />
     <Compile Include="Shell\AppShellExtensions.cs" />
     <Compile Include="Sql\Commands\PublishSProcOptionsCommand.cs" />
-    <Compile Include="Shell\VsSettingsStorage.cs" />
+    <Compile Include="Shell\Services\VsSettingsStorage.cs" />
     <Compile Include="Sql\Commands\PublishSProcCommand.cs" />
     <Compile Include="Sql\Commands\ManageDsnCommand.cs" />
     <Compile Include="Sql\Commands\AddDsnCommand.cs" />
@@ -339,7 +362,6 @@
     <Compile Include="Utilities\VsUIShellExtensions.cs" />
     <Compile Include="Windows\ToolWindowPaneFactory.cs" />
     <Compile Include="History\VsRHistoryVisualComponentContainerFactory.cs" />
-    <Compile Include="Imaging\ImagesProvider.cs" />
     <Compile Include="Interop\MailUtility.cs" />
     <Compile Include="Logging\LogCleanup.cs" />
     <Compile Include="Logging\DiagnosticLogs.cs" />
@@ -369,10 +391,6 @@
     <Compile Include="ProjectSystem\OpenRDataVsStd97CommandGroupHandler.cs" />
     <Compile Include="ProjectSystem\OpenRDataVsUiHierarchyWindowCommandGroupHandler.cs" />
     <Compile Include="ProjectSystem\ProjectIconProvider.cs" />
-    <Compile Include="ProjectSystem\ProjectTreeModifier.cs" />
-    <Compile Include="Publishing\Commands\PreviewWordCommand.cs" />
-    <Compile Include="Publishing\Commands\PreviewPdfCommand.cs" />
-    <Compile Include="Publishing\Commands\PreviewHtmlCommand.cs" />
     <Compile Include="Repl\Commands\Code\PasteCurrentCodeCommand.cs" />
     <Compile Include="Repl\Commands\Code\ExecuteCurrentCodeCommand.cs" />
     <Compile Include="Repl\Commands\History\HistoryNavigationCommand.cs" />
@@ -410,22 +428,11 @@
     <Compile Include="DataInspect\VariableView.xaml.cs">
       <DependentUpon>VariableView.xaml</DependentUpon>
     </Compile>
-    <Compile Include="Document\IVsEditorDocumentFactory.cs" />
-    <Compile Include="Document\Markdown\VsMdEditorDocument.cs" />
-    <Compile Include="Document\Markdown\VsMdEditorDocumentFactory.cs" />
-    <Compile Include="Document\R\VsREditorDocument.cs" />
-    <Compile Include="Document\R\VsREditorDocumentFactory.cs" />
-    <Compile Include="Editors\IObjectInstanceFactory.cs" />
     <Compile Include="Logging\OutputWindowLog.cs" />
     <Compile Include="Packages\R\PackageCommands.cs" />
-    <Compile Include="Publishing\Definitions\IMarkdownFlavorPublishHandler.cs" />
-    <Compile Include="Publishing\Handlers\RmdPublishHandler.cs" />
-    <Compile Include="Publishing\Commands\PreviewCommand.cs" />
-    <Compile Include="Publishing\Definitions\PublishFormat.cs" />
     <Compile Include="Packages\Markdown\MdEditorFactory.cs" />
     <Compile Include="Packages\Markdown\MdLanguageService.cs" />
-    <Compile Include="Options\Attributes\ReplShortcutTypeConverter.cs" />
-    <Compile Include="Options\R\Tools\RToolsSettingsImplementation.cs" />
+    <Compile Include="Options\R\Tools\RSettingsImplementation.cs" />
     <Compile Include="Packages\Attributes\ProvideDebugEngineAttribute.cs" />
     <Compile Include="Packages\Attributes\ProvideDebugExceptionAttribute.cs" />
     <Compile Include="Packages\Attributes\ProvideDebugLanguageAttribute.cs" />
@@ -456,7 +463,6 @@
     </Compile>
     <Compile Include="ProjectSystem\RProjectLoadHooks.cs" />
     <Compile Include="ProjectSystem\RProjectSourceItemProviderExtension.cs" />
-    <Compile Include="Publishing\Handlers\MdPublishHandler.cs" />
     <Compile Include="Repl\Commands\ReplCommandFactory.cs" />
     <Compile Include="Repl\Commands\ReplCommandTargetProvider.cs" />
     <Compile Include="Repl\Commands\ReplCommandController.cs" />
@@ -470,11 +476,10 @@
     <Compile Include="Search\VsSearchControl.cs" />
     <Compile Include="Search\VsSearchControlProvider.cs" />
     <Compile Include="Search\VsSearchTask.cs" />
-    <Compile Include="Shell\VisualComponentToolWindow.cs" />
-    <Compile Include="Shell\VisualComponentToolWindowAdapter.cs" />
+    <Compile Include="Shell\ToolWindows\VisualComponentToolWindow.cs" />
+    <Compile Include="Shell\ToolWindows\VisualComponentToolWindowAdapter.cs" />
     <Compile Include="Shell\VsAppShell.cs" />
     <Compile Include="Packages\R\REditorFactory.cs" />
-    <Compile Include="Shell\IApplicationShell.cs" />
     <Compile Include="Packages\R\RGuidList.cs" />
     <Compile Include="Packages\R\RLanguageService.cs" />
     <Compile Include="Editors\TextBufferInitializationTracker.cs" />
@@ -482,7 +487,7 @@
     <Compile Include="Packages\BasePackage.cs" />
     <Compile Include="Packages\R\RPackage.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Shell\IdleTimeSource.cs" />
+    <Compile Include="Shell\Services\VsIdleTimeSource.cs" />
     <Compile Include="Expansions\IExpansionsCache.cs" />
     <Compile Include="Expansions\ExpansionBuffer.cs" />
     <Compile Include="Expansions\ExpansionClient.cs" />
@@ -492,8 +497,6 @@
     <Compile Include="SurveyNews\ISurveyNewsFeedClient.cs" />
     <Compile Include="SurveyNews\ISurveyNewsOptions.cs" />
     <Compile Include="SurveyNews\ISurveyNewsService.cs" />
-    <Compile Include="Browsers\IWebBrowserServices.cs" />
-    <Compile Include="Browsers\WebBrowserServices.cs" />
     <Compile Include="SurveyNews\SurveyNewsFeed.cs" />
     <Compile Include="SurveyNews\SurveyNewsFeedClient.cs" />
     <Compile Include="SurveyNews\SurveyNewsFeedException.cs" />
@@ -518,7 +521,6 @@
     <Compile Include="Utilities\Navigation.cs" />
     <Compile Include="Utilities\ProjectUtilities.cs" />
     <Compile Include="Utilities\TextBufferUtilities.cs" />
-    <Compile Include="Utilities\CompletionUtilities.cs" />
     <Compile Include="Utilities\ToolWindowUtilities.cs" />
     <Compile Include="Utilities\ViewUtilities.cs" />
     <Compile Include="Utilities\ActiveWpfTextViewTracker.cs" />
@@ -555,8 +557,6 @@
     <None Include="source.extension.vsixmanifest">
       <SubType>Designer</SubType>
     </None>
-    <None Include="source.extension.15.0.vsixmanifest" />
-    <None Include="source.extension.14.0.vsixmanifest" />
     <EmbeddedResource Include="Resources\RDocumentationFile.ico" />
     <EmbeddedResource Include="Resources\Procedure.ico" />
     <EmbeddedResource Include="Resources\RApplication.ico" />
@@ -631,8 +631,6 @@
       <IncludeInVSIX>true</IncludeInVSIX>
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <None Include="project.14.0.json" />
-    <None Include="project.15.0.json" />
     <None Include="project.json" />
     <None Include="Rules\rtvs.rules.props">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
@@ -1050,21 +1048,9 @@
     </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>
-    <Reference Condition="'$(VisualStudioVersion)'=='14.0'" Include="Microsoft.Build, Version=14.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL" />
     <Reference Include="Microsoft.CSharp" />
     <Reference Include="Microsoft.VisualStudio.CommandBars, Version=8.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
       <EmbedInteropTypes>True</EmbedInteropTypes>
-    </Reference>
-    <Reference Condition="'$(VisualStudioVersion)'=='14.0'" Include="Microsoft.VisualStudio.ComponentModelHost, Version=14.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL" />
-    <Reference Include="Microsoft.VisualStudio.InteractiveWindow">
-      <Private>False</Private>
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>$(LibDirectory)\$(VisualStudioVersion)\Microsoft.VisualStudio.InteractiveWindow.dll</HintPath>
-    </Reference>
-    <Reference Include="Microsoft.VisualStudio.VsInteractiveWindow">
-      <Private>False</Private>
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>$(LibDirectory)\$(VisualStudioVersion)\Microsoft.VisualStudio.VsInteractiveWindow.dll</HintPath>
     </Reference>
     <Reference Include="$(PrivateAssembliesFolderPath)\Microsoft.VisualStudio.Telemetry.dll">
       <SpecificVersion>False</SpecificVersion>
@@ -1085,7 +1071,6 @@
     <Reference Include="System.ComponentModel.Composition" />
     <Reference Include="System.Data" />
     <Reference Include="System.Drawing" />
-    <Reference Include="System.IO.Compression" />
     <Reference Include="System.Runtime.Serialization" />
     <Reference Include="System.Windows.Forms" />
     <Reference Include="System.Xaml" />
@@ -1095,7 +1080,7 @@
     <Reference Include="WindowsFormsIntegration" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\Common\Core\Impl\Microsoft.Common.Core.csproj">
+    <ProjectReference Include="..\..\Common\Core\Impl\Microsoft.R.Common.Core.csproj">
       <Project>{8D408909-459F-4853-A36C-745118F99869}</Project>
       <Name>Microsoft.Common.Core</Name>
     </ProjectReference>
@@ -1107,57 +1092,48 @@
       <Project>{6d62df0d-d9c3-49a7-a693-acd0691ba69d}</Project>
       <Name>Microsoft.R.Debugger</Name>
     </ProjectReference>
-    <ProjectReference Include="..\..\Host\Broker\Impl\Microsoft.R.Host.Broker.csproj">
+    <ProjectReference Include="..\..\Windows\Core\Impl\Microsoft.R.Common.Core.Windows.csproj">
+      <Project>{01e3d8c2-9c24-492b-b13b-c6d7068b6bf8}</Project>
+      <Name>Microsoft.R.Common.Core.Windows</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\Windows\Host\Broker\Impl\Microsoft.R.Host.Broker.Windows.csproj">
       <Project>{2cc10e50-392e-4b5d-98e4-d38f0061d363}</Project>
-      <Name>Microsoft.R.Host.Broker</Name>
+      <Name>Microsoft.R.Host.Broker.Windows</Name>
       <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
     </ProjectReference>
     <ProjectReference Include="..\..\Host\Client\Impl\Microsoft.R.Host.Client.csproj">
-      <Project>{E09D3BDA-2E6B-47B5-87AC-B6FC2D33DFAB}</Project>
+      <Project>{b81d01eb-ad08-4929-be99-6623af523a23}</Project>
       <Name>Microsoft.R.Host.Client</Name>
     </ProjectReference>
     <ProjectReference Include="..\..\Host\Process\src\Microsoft.R.Host.vcxproj">
       <SetPlatform>Platform=x64</SetPlatform>
       <Project>{131842ce-daf9-4c0e-8409-4a26ef7961a7}</Project>
       <Name>Microsoft.R.Host</Name>
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
     </ProjectReference>
     <ProjectReference Include="..\..\Languages\Core\Impl\Microsoft.Languages.Core.csproj">
       <Project>{25cd8690-6208-4740-b123-6dbce6b9444a}</Project>
       <Name>Microsoft.Languages.Core</Name>
-      <IncludeOutputGroupsInVSIX>BuiltProjectOutputGroup%3bBuiltProjectOutputGroupDependencies%3bGetCopyToOutputDirectoryItems%3bSatelliteDllsProjectOutputGroup%3b</IncludeOutputGroupsInVSIX>
-      <IncludeOutputGroupsInVSIXLocalOnly>DebugSymbolsProjectOutputGroup%3b</IncludeOutputGroupsInVSIXLocalOnly>
     </ProjectReference>
     <ProjectReference Include="..\..\Languages\Editor\Impl\Microsoft.Languages.Editor.csproj">
       <Project>{62857e49-e586-4baa-ae4d-1232093e7378}</Project>
       <Name>Microsoft.Languages.Editor</Name>
-      <IncludeOutputGroupsInVSIX>BuiltProjectOutputGroup%3bBuiltProjectOutputGroupDependencies%3bGetCopyToOutputDirectoryItems%3bSatelliteDllsProjectOutputGroup%3b</IncludeOutputGroupsInVSIX>
-      <IncludeOutputGroupsInVSIXLocalOnly>DebugSymbolsProjectOutputGroup%3b</IncludeOutputGroupsInVSIXLocalOnly>
-    </ProjectReference>
-    <ProjectReference Include="..\..\Markdown\Editor\Impl\Microsoft.Markdown.Editor.csproj">
-      <Project>{98e0b8ac-1193-4bfd-bf5c-6712c93abd03}</Project>
-      <Name>Microsoft.Markdown.Editor</Name>
     </ProjectReference>
     <ProjectReference Include="..\..\ProjectSystem\Impl\Microsoft.VisualStudio.ProjectSystem.FileSystemMirroring.csproj">
       <Project>{41AA8769-0FBC-4A80-8498-21C833F0C2AC}</Project>
       <Name>Microsoft.VisualStudio.ProjectSystem.FileSystemMirroring</Name>
-      <IncludeOutputGroupsInVSIX>BuiltProjectOutputGroup%3bBuiltProjectOutputGroupDependencies%3bGetCopyToOutputDirectoryItems%3bSatelliteDllsProjectOutputGroup%3b</IncludeOutputGroupsInVSIX>
-      <IncludeOutputGroupsInVSIXLocalOnly>DebugSymbolsProjectOutputGroup%3b</IncludeOutputGroupsInVSIXLocalOnly>
     </ProjectReference>
     <ProjectReference Include="..\..\R\Components\Impl\Microsoft.R.Components.csproj">
-      <Project>{506141be-1418-4d75-8e24-54a9280b0a66}</Project>
+      <Project>{c6648f60-513a-4052-9a34-61b156058ec3}</Project>
       <Name>Microsoft.R.Components</Name>
     </ProjectReference>
     <ProjectReference Include="..\..\R\Core\Impl\Microsoft.R.Core.csproj">
       <Project>{0c4bce1d-3cb8-4e2a-9252-58784d7f26a5}</Project>
       <Name>Microsoft.R.Core</Name>
-      <IncludeOutputGroupsInVSIX>BuiltProjectOutputGroup%3bBuiltProjectOutputGroupDependencies%3bGetCopyToOutputDirectoryItems%3bSatelliteDllsProjectOutputGroup%3b</IncludeOutputGroupsInVSIX>
-      <IncludeOutputGroupsInVSIXLocalOnly>DebugSymbolsProjectOutputGroup%3b</IncludeOutputGroupsInVSIXLocalOnly>
     </ProjectReference>
     <ProjectReference Include="..\..\R\Editor\Impl\Microsoft.R.Editor.csproj">
-      <Project>{d6eeef87-ce3a-4804-a409-39966b96c850}</Project>
+      <Project>{ae67eba1-aff1-4425-8c89-4f0045a6bfd9}</Project>
       <Name>Microsoft.R.Editor</Name>
-      <IncludeOutputGroupsInVSIX>BuiltProjectOutputGroup%3bBuiltProjectOutputGroupDependencies%3bGetCopyToOutputDirectoryItems%3bSatelliteDllsProjectOutputGroup%3b</IncludeOutputGroupsInVSIX>
-      <IncludeOutputGroupsInVSIXLocalOnly>DebugSymbolsProjectOutputGroup%3b</IncludeOutputGroupsInVSIXLocalOnly>
     </ProjectReference>
     <ProjectReference Include="..\..\R\Interpreters\Impl\Microsoft.R.Interpreters.csproj">
       <Project>{8445A4FB-4443-432C-94E8-1408559B7F58}</Project>
@@ -1167,15 +1143,41 @@
       <Project>{b0c3a5c2-f713-40c9-bf08-20a1014d74de}</Project>
       <Name>Microsoft.VisualStudio.R.Sql</Name>
     </ProjectReference>
-    <ProjectReference Include="..\..\R\Support\Impl\Microsoft.R.Support.csproj">
-      <Project>{c1957d47-b0b4-42e0-bc08-0d5e96e47fe4}</Project>
-      <Name>Microsoft.R.Support</Name>
-    </ProjectReference>
     <ProjectReference Include="..\..\R\Wpf\Impl\Microsoft.R.Wpf.csproj">
       <Project>{F951311C-D665-4987-95A4-72A2DE37E263}</Project>
       <Name>Microsoft.R.Wpf</Name>
-      <IncludeOutputGroupsInVSIX>BuiltProjectOutputGroup%3bBuiltProjectOutputGroupDependencies%3bGetCopyToOutputDirectoryItems%3bSatelliteDllsProjectOutputGroup%3b</IncludeOutputGroupsInVSIX>
-      <IncludeOutputGroupsInVSIXLocalOnly>DebugSymbolsProjectOutputGroup%3b</IncludeOutputGroupsInVSIXLocalOnly>
+    </ProjectReference>
+    <ProjectReference Include="..\..\Windows\Editor\Impl\Microsoft.Languages.Editor.Windows.csproj">
+      <Project>{d1895fa9-65f5-4048-a364-f6ab8d1dc981}</Project>
+      <Name>Microsoft.Languages.Editor.Windows</Name>
+      <EmbedInteropTypes>False</EmbedInteropTypes>
+    </ProjectReference>
+    <ProjectReference Include="..\..\Windows\Markdown\Editor\Impl\Microsoft.Markdown.Editor.Windows.csproj">
+      <Project>{98e0b8ac-1193-4bfd-bf5c-6712c93abd03}</Project>
+      <Name>Microsoft.Markdown.Editor.Windows</Name>
+      <EmbedInteropTypes>False</EmbedInteropTypes>
+    </ProjectReference>
+    <ProjectReference Include="..\..\Windows\R\Editor\Impl\Microsoft.R.Editor.Windows.csproj">
+      <Project>{d6eeef87-ce3a-4804-a409-39966b96c850}</Project>
+      <Name>Microsoft.R.Editor.Windows</Name>
+      <EmbedInteropTypes>False</EmbedInteropTypes>
+    </ProjectReference>
+    <ProjectReference Include="..\..\Windows\Host\Broker\Impl\Microsoft.R.Host.Broker.Windows.csproj">
+      <Project>{2cc10e50-392e-4b5d-98e4-d38f0061d363}</Project>
+      <Name>Microsoft.R.Host.Broker.Windows</Name>
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+    </ProjectReference>
+    <ProjectReference Include="..\..\Windows\R\Interpreters\Impl\Microsoft.R.Interpreters.Windows.csproj">
+      <Project>{DE1EC50A-C588-45A9-B22C-981419CD7CD4}</Project>
+      <Name>Microsoft.R.Interpreters.Windows</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\Windows\Host\Client\Impl\Microsoft.R.Host.Client.Windows.csproj">
+      <Project>{e09d3bda-2e6b-47b5-87ac-b6fc2d33dfab}</Project>
+      <Name>Microsoft.R.Host.Client.Windows</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\Windows\R\Components\Impl\Microsoft.R.Components.Windows.csproj">
+      <Project>{506141be-1418-4d75-8e24-54a9280b0a66}</Project>
+      <Name>Microsoft.R.Components.Windows</Name>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
@@ -1485,7 +1487,9 @@
   <Import Project="..\..\Common\BuildTasks\Microsoft.Common.BuildTasks.targets" />
   <Target Name="AddToVsixSources" AfterTargets="GetVsixSourceItems">
     <ItemGroup>
+      <VSIXSourceItem Include="$(OutputPath)\Markdig.dll" />
       <VSIXSourceItem Include="$(OutputPath)\Newtonsoft.Json.dll" />
+      <VSIXSourceItem Include="$(OutputPath)\YamlDotNet.dll" />
       <VSIXSourceItem Include="$(OutputPath)\Microsoft.Data.ConnectionUI.Dialog.dll" />
       <VSIXSourceItem Include="$(OutputPath)\Microsoft.Data.ConnectionUI.dll" />
       <VSIXSourceItem Include="$(OutputPath)\Microsoft.Extensions.Caching.Abstractions.dll" />
@@ -1511,6 +1515,8 @@
       <VSIXSourceItem Include="$(OutputPath)\Microsoft.Extensions.Logging.Console.dll" />
       <VSIXSourceItem Include="$(OutputPath)\Microsoft.Extensions.Logging.Debug.dll" />
       <VSIXSourceItem Include="$(OutputPath)\Microsoft.Extensions.Logging.dll" />
+      <VSIXSourceItem Include="$(OutputPath)\Microsoft.Extensions.Logging.EventLog.dll" />
+      <VSIXSourceItem Include="$(OutputPath)\Microsoft.Extensions.Logging.TraceSource.dll" />
       <VSIXSourceItem Include="$(OutputPath)\Microsoft.Extensions.ObjectPool.dll" />
       <VSIXSourceItem Include="$(OutputPath)\Microsoft.Extensions.Options.ConfigurationExtensions.dll" />
       <VSIXSourceItem Include="$(OutputPath)\Microsoft.Extensions.Options.dll" />
@@ -1549,6 +1555,7 @@
       <VSIXSourceItem Include="$(OutputPath)\Microsoft.AspNetCore.Mvc.ViewFeatures.dll" />
       <VSIXSourceItem Include="$(OutputPath)\Microsoft.AspNetCore.Razor.dll" />
       <VSIXSourceItem Include="$(OutputPath)\Microsoft.AspNetCore.Razor.Runtime.dll" />
+      <VSIXSourceItem Include="$(OutputPath)\Microsoft.AspNetCore.ResponseCaching.Abstractions.dll" />
       <VSIXSourceItem Include="$(OutputPath)\Microsoft.AspNetCore.Routing.Abstractions.dll" />
       <VSIXSourceItem Include="$(OutputPath)\Microsoft.AspNetCore.Routing.dll" />
       <VSIXSourceItem Include="$(OutputPath)\Microsoft.AspNetCore.Server.WebListener.dll" />
@@ -1559,6 +1566,8 @@
       <VSIXSourceItem Include="$(OutputPath)\Microsoft.AspNetCore.WebUtilities.dll" />
       <VSIXSourceItem Include="$(OutputPath)\Microsoft.Net.Http.Headers.dll" />
       <VSIXSourceItem Include="$(OutputPath)\Microsoft.Net.Http.Server.dll" />
+      <VSIXSourceItem Include="$(OutputPath)\Microsoft.R.Host.Broker.dll" />
+      <VSIXSourceItem Include="$(OutputPath)\Microsoft.Win32.Primitives.dll" />
       <VSIXSourceItem Include="$(OutputPath)\System.AppContext.dll" />
       <VSIXSourceItem Include="$(OutputPath)\System.Buffers.dll" />
       <VSIXSourceItem Include="$(OutputPath)\System.Collections.Immutable.dll" />
@@ -1569,17 +1578,22 @@
       <VSIXSourceItem Include="$(OutputPath)\System.Composition.Hosting.dll" />
       <VSIXSourceItem Include="$(OutputPath)\System.Composition.Runtime.dll" />
       <VSIXSourceItem Include="$(OutputPath)\System.Composition.TypedParts.dll" />
+      <VSIXSourceItem Include="$(OutputPath)\System.Diagnostics.DiagnosticSource.dll" />
       <VSIXSourceItem Include="$(OutputPath)\System.Console.dll" />
       <VSIXSourceItem Include="$(OutputPath)\System.Diagnostics.DiagnosticSource.dll" />
       <VSIXSourceItem Include="$(OutputPath)\System.Diagnostics.FileVersionInfo.dll" />
       <VSIXSourceItem Include="$(OutputPath)\System.Diagnostics.StackTrace.dll" />
+      <VSIXSourceItem Include="$(OutputPath)\System.IO.Compression.dll" />
       <VSIXSourceItem Include="$(OutputPath)\System.IO.Compression.ZipFile.dll" />
       <VSIXSourceItem Include="$(OutputPath)\System.IO.FileSystem.dll" />
       <VSIXSourceItem Include="$(OutputPath)\System.IO.FileSystem.Primitives.dll" />
+      <VSIXSourceItem Include="$(OutputPath)\System.Net.Http.dll" />
+      <VSIXSourceItem Include="$(OutputPath)\System.Net.Http.WinHttpHandler.dll" />
+      <VSIXSourceItem Include="$(OutputPath)\System.Net.Sockets.dll" />
       <VSIXSourceItem Include="$(OutputPath)\System.Numerics.Vectors.dll" />
       <VSIXSourceItem Include="$(OutputPath)\System.Reflection.Metadata.dll" />
+      <VSIXSourceItem Include="$(OutputPath)\System.Runtime.CompilerServices.Unsafe.dll" />
       <VSIXSourceItem Include="$(OutputPath)\System.Runtime.InteropServices.RuntimeInformation.dll" />
-      <VSIXSourceItem Include="$(OutputPath)\System.Runtime.Serialization.Primitives.dll" />
       <VSIXSourceItem Include="$(OutputPath)\System.Security.Cryptography.Algorithms.dll" />
       <VSIXSourceItem Include="$(OutputPath)\System.Security.Cryptography.Encoding.dll" />
       <VSIXSourceItem Include="$(OutputPath)\System.Security.Cryptography.Primitives.dll" />
@@ -1589,26 +1603,71 @@
       <VSIXSourceItem Include="$(OutputPath)\System.Threading.Tasks.Dataflow.dll" />
       <VSIXSourceItem Include="$(OutputPath)\System.Threading.Tasks.Extensions.dll" />
       <VSIXSourceItem Include="$(OutputPath)\System.Threading.Thread.dll" />
+      <VSIXSourceItem Include="$(OutputPath)\System.ValueTuple.dll" />
       <VSIXSourceItem Include="$(OutputPath)\System.Xml.XmlDocument.dll" />
       <VSIXSourceItem Include="$(OutputPath)\System.Xml.XPath.dll" />
       <VSIXSourceItem Include="$(OutputPath)\System.Xml.XPath.XDocument.dll" />
-      <VSIXSourceItem Include="$(OutputPath)\Microsoft.DotNet.InternalAbstractions.dll" />
       <VSIXSourceItem Include="$(OutputPath)\Microsoft.CodeAnalysis.CSharp.dll" />
       <VSIXSourceItem Include="$(OutputPath)\Microsoft.CodeAnalysis.dll" />
       <VSIXSourceItem Include="$(OutputPath)\libuv.dll" />
-      <VSIXSourceItem Include="$(OutputPath)\zip.dll" />
-      <VSIXSourceItem Include="$(OutputPath)\ItemTemplates\**\*.*">
-        <VSIXSubPath>ItemTemplates</VSIXSubPath>
+      <VSIXSourceItem Include="$(OutputPath)\libzip-5.dll" />
+      <VSIXSourceItem Include="$(OutputPath)\zlib1.dll" />
+      <VSIXSourceItem Include="$(OutputPath)\libwinpthread-1.dll" />
+      <VSIXSourceItem Include="$(OutputPath)\Markdown\PreviewTemplate.html" />
+      <VSIXSourceItem Include="$(OutputPath)\Templates\ProjectTemplates\EmptyProject\*.*">
+        <VSIXSubPath>ProjectTemplates\EmptyProject</VSIXSubPath>
       </VSIXSourceItem>
-      <VSIXSourceItem Include="$(OutputPath)\ProjectTemplates\**\*.*">
-        <VSIXSubPath>ProjectTemplates</VSIXSubPath>
+      <VSIXSourceItem Include="$(OutputPath)\Templates\ItemTemplates\DatasetRD\*.*">
+        <VSIXSubPath>ItemTemplates\DatasetRD</VSIXSubPath>
       </VSIXSourceItem>
-    </ItemGroup>
-    <ItemGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
-      <VSIXSourceItem Include="$(OutputPath)\zlibd.dll" />
-    </ItemGroup>
-    <ItemGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
-      <VSIXSourceItem Include="$(OutputPath)\zlib.dll" />
+      <VSIXSourceItem Include="$(OutputPath)\Templates\ItemTemplates\EmptyRD\*.*">
+        <VSIXSubPath>ItemTemplates\EmptyRD</VSIXSubPath>
+      </VSIXSourceItem>
+      <VSIXSourceItem Include="$(OutputPath)\Templates\ItemTemplates\EmptyRMD\*.*">
+        <VSIXSubPath>ItemTemplates\EmptyRMD</VSIXSubPath>
+      </VSIXSourceItem>
+      <VSIXSourceItem Include="$(OutputPath)\Templates\ItemTemplates\FunctionRD\*.*">
+        <VSIXSubPath>ItemTemplates\FunctionRD</VSIXSubPath>
+      </VSIXSourceItem>
+      <VSIXSourceItem Include="$(OutputPath)\Templates\ItemTemplates\RScript\*.*">
+        <VSIXSubPath>ItemTemplates\RScript</VSIXSubPath>
+      </VSIXSourceItem>
+      <VSIXSourceItem Include="$(OutputPath)\Templates\ItemTemplates\RSettings\*.*">
+        <VSIXSubPath>ItemTemplates\RSettings</VSIXSubPath>
+      </VSIXSourceItem>
+      <VSIXSourceItem Include="$(OutputPath)\Templates\ItemTemplates\SqlQuery\*.*">
+        <VSIXSubPath>ItemTemplates\SqlQuery</VSIXSubPath>
+      </VSIXSourceItem>
+      <VSIXSourceItem Include="$(OutputPath)\Templates\ItemTemplates\SqlSProc\*.*">
+        <VSIXSubPath>ItemTemplates\SqlSProc</VSIXSubPath>
+      </VSIXSourceItem>
+      <VSIXSourceItem Include="$(OutputPath)\Templates\ItemTemplates\TextFile\*.*">
+        <VSIXSubPath>ItemTemplates\SqlSProc</VSIXSubPath>
+      </VSIXSourceItem>
+      <VSIXSourceItem Include="$(OutputPath)\Templates\ItemTemplates\WebHtmlPage\*.*">
+        <VSIXSubPath>ItemTemplates\WebHtmlPage</VSIXSubPath>
+      </VSIXSourceItem>
+      <VSIXSourceItem Include="$(OutputPath)\Templates\ItemTemplates\WebStyleSheet\*.*">
+        <VSIXSubPath>ItemTemplates\WebStyleSheet</VSIXSubPath>
+      </VSIXSourceItem>
+      <VSIXSourceItem Include="$(OutputPath)\Templates\ItemTemplates\XMLFile\*.*">
+        <VSIXSubPath>ItemTemplates\XMLFile</VSIXSubPath>
+      </VSIXSourceItem>
+      <VSIXSourceItem Include="$(OutputPath)\Templates\ItemTemplates\XMLSchema\*.*">
+        <VSIXSubPath>ItemTemplates\XMLSchema</VSIXSubPath>
+      </VSIXSourceItem>
+      <VSIXSourceItem Include="$(OutputPath)\Templates\ItemTemplates\XSLTFile\*.*">
+        <VSIXSubPath>ItemTemplates\XSLTFile</VSIXSubPath>
+      </VSIXSourceItem>
+      <VSIXSourceItem Include="$(OutputPath)\RTVS\*.*">
+        <VSIXSubPath>RTVS</VSIXSubPath>
+      </VSIXSourceItem>
+      <VSIXSourceItem Include="$(OutputPath)\RTVS\R\*.*">
+        <VSIXSubPath>RTVS\R</VSIXSubPath>
+      </VSIXSourceItem>
+      <VSIXSourceItem Include="$(OutputPath)\RTVS\man\*.*">
+        <VSIXSubPath>RTVS\man</VSIXSubPath>
+      </VSIXSourceItem>
     </ItemGroup>
   </Target>
   <Target Name="AfterBuild">
@@ -1646,13 +1705,11 @@
   <!-- The target needs to run so the task can populate the output items correctly. 
     The task does an up to date check on the files themselves
    -->
-  <UsingTask Condition="'$(VisualStudioVersion)'=='14.0'" TaskName="XamlRuleToCode" AssemblyFile="$(NuGetPackageRoot)\Microsoft.VisualStudio.ProjectSystem.SDK.Tools\14.0.50617-pre\build\net451\Microsoft.VisualStudio.ProjectSystem.Sdk.Tasks.dll" />
-  <UsingTask Condition="'$(VisualStudioVersion)'=='15.0'" TaskName="XamlRuleToCode" AssemblyFile="$(NuGetPackageRoot)\Microsoft.VisualStudio.ProjectSystem.SDK.Tools\15.0.183-pre\build\net451\Microsoft.VisualStudio.ProjectSystem.Sdk.Tasks.dll" />
+  <UsingTask Condition="'$(VisualStudioVersion)'=='15.0'" TaskName="XamlRuleToCode" AssemblyFile="$(NuGetPackageRoot)\Microsoft.VisualStudio.ProjectSystem.SDK.Tools\15.0.751\build\net451\Microsoft.VisualStudio.ProjectSystem.Sdk.Tasks.dll" />
   <Target Name="GenerateRuleSourceFromXaml" DependsOnTargets="GenerateRulePrep" Condition="'@(XamlPropertyRule)' != ''">
     <XamlRuleToCode CreateFallbackRule="%(XamlPropertyRule.CreateFallbackRule)" NamespaceName="%(XamlPropertyRule.Namespace)" RuleMissingError="%(XamlPropertyRule.RuleMissingError)" PropertyMissingError="%(XamlPropertyRule.PropertyMissingError)" Inputs="@(XamlPropertyRule)" OutputDirectory="%(XamlPropertyRule.OutputPath)" DataAccess="%(XamlPropertyRule.DataAccess)" RuleBaseTypes="%(XamlPropertyRule.RuleBaseTypes)" RuleNamePrefix="%(XamlPropertyRule.RuleNamePrefix)" RuleInjectionClassName="%(XamlPropertyRule.RuleInjectionClassName)" RuleInjection="%(XamlPropertyRule.RuleInjection)" RuleInjectionContextName="%(XamlPropertyRule.RuleInjectionCatalog)" RuleInjectionItemTypePropertyName="%(XamlPropertyRule.RuleInjectionItemTypePropertyName)" RuleInjectionItemNamePropertyName="%(XamlPropertyRule.RuleInjectionItemNamePropertyName)" ProjectPropertiesContext="%(XamlPropertyRule.ProjectPropertiesContext)" IPropertyPagesCatalogTypeName="%(XamlPropertyRule.IPropertyPagesCatalogTypeName)" IRuleTypeName="%(XamlPropertyRule.IRuleTypeName)" ConfiguredProjectTypeName="%(XamlPropertyRule.ConfiguredProjectTypeName)" IEvaluatedPropertyTypeName="%(XamlPropertyRule.IEvaluatedPropertyTypeName)" IProjectPropertiesContextTypeName="%(XamlPropertyRule.IProjectPropertiesContextTypeName)">
       <Output TaskParameter="ResourcesToEmbed" ItemName="EmbeddedResource" />
     </XamlRuleToCode>
   </Target>
-  <Import Project="$(NuGetPackageRoot)\Microsoft.VSSDK.BuildTools\14.3.25420\tools\vssdk\Microsoft.VsSDK.targets" Condition="'$(VisualStudioVersion)'=='14.0' AND Exists('$(NuGetPackageRoot)\Microsoft.VSSDK.BuildTools\14.3.25420\tools\vssdk\Microsoft.VsSDK.targets')" />
-  <Import Project="$(NuGetPackageRoot)\Microsoft.VSSDK.BuildTools\15.0.25929-RC2\tools\vssdk\Microsoft.VsSDK.targets" Condition="'$(VisualStudioVersion)'=='15.0' AND Exists('$(NuGetPackageRoot)\Microsoft.VSSDK.BuildTools\15.0.25929-RC2\tools\vssdk\Microsoft.VsSDK.targets')" />
+  <Import Project="$(NuGetPackageRoot)\Microsoft.VSSDK.BuildTools\15.0.26201\tools\vssdk\Microsoft.VsSDK.targets" Condition="'$(VisualStudioVersion)'=='15.0' AND Exists('$(NuGetPackageRoot)\Microsoft.VSSDK.BuildTools\15.0.26201\tools\vssdk\Microsoft.VsSDK.targets')" />
 </Project>

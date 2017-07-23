@@ -5,8 +5,8 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
-using Microsoft.Common.Core.Shell;
 using Microsoft.Common.Core.Threading;
+using Microsoft.Common.Core.UI;
 using static Microsoft.R.Host.Client.YesNoCancel;
 
 namespace Microsoft.R.Host.Client.Host {
@@ -34,12 +34,14 @@ namespace Microsoft.R.Host.Client.Host {
         public Task WebBrowser(string url, CancellationToken ct) => Task.CompletedTask;
         public Task ViewLibrary(CancellationToken cancellationToken) => Task.CompletedTask;
         public Task ShowFile(string fileName, string tabName, bool deleteFile, CancellationToken cancellationToken) => Task.CompletedTask;
+        public Task<string> EditFileAsync(string expression, string fileName, CancellationToken cancellationToken) => Task.FromResult(string.Empty);
         public void DirectoryChanged() { }
         public Task ViewObject(string expression, string title, CancellationToken cancellationToken) => Task.CompletedTask;
-        public void PackagesInstalled() { }
         public void PackagesRemoved() {}
         public Task<string> FetchFileAsync(string remoteFileName, ulong remoteBlocbId, string localPath, CancellationToken cancellationToken) => Task.FromResult(string.Empty);
         public string GetLocalizedString(string id) => null;
+        public Task BeforePackagesInstalledAsync(CancellationToken cancellationToken) => Task.CompletedTask;
+        public Task AfterPackagesInstalledAsync(CancellationToken cancellationToken) => Task.CompletedTask;
 
         public async Task<string> ReadConsole(IReadOnlyList<IRContext> contexts, string prompt, int len, bool addToHistory, CancellationToken ct) {
             await _mrs.WaitAsync(ct);

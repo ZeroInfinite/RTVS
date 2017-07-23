@@ -3,42 +3,44 @@
 
 using System;
 using System.Collections.Generic;
-using System.ComponentModel.Composition;
 using System.Diagnostics;
 using System.Linq;
-using System.Security;
+using System.Security.Claims;
 using System.Security.Principal;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.Common.Core;
+using Microsoft.Common.Core.Disposables;
 using Microsoft.Common.Core.Logging;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Microsoft.R.Host.Broker.Interpreters;
 using Microsoft.R.Host.Broker.Logging;
 using Microsoft.R.Host.Broker.Pipes;
+using Microsoft.R.Host.Broker.Services;
 using Microsoft.R.Host.Protocol;
 
 namespace Microsoft.R.Host.Broker.Sessions {
     public class SessionManager {
-        private const int MaximumConcurrentClientWindowsUsers = 1;
-
-        private readonly InterpreterManager _interpManager;
         private readonly LoggingOptions _loggingOptions;
-        private readonly ILogger _hostOutputLogger, _messageLogger, _sessionLogger;
+        private readonly ILogger _hostOutputLogger, _messageLogger;
+        private readonly IRHostProcessService _processService;
+        private readonly IApplicationLifetime _applicationLifetime;
+        private readonly ILogger _sessionLogger;
 
         private readonly Dictionary<string, List<Session>> _sessions = new Dictionary<string, List<Session>>();
         private readonly HashSet<string> _blockedUsers = new HashSet<string>();
 
-        [ImportingConstructor]
-        public SessionManager(
-            InterpreterManager interpManager,
-            IOptions<LoggingOptions> loggingOptions,
-            ILogger<Session> sessionLogger,
-            ILogger<MessagePipe> messageLogger,
-            ILogger<Process> hostOutputLogger
-        ) {
-            _interpManager = interpManager;
+        public SessionManager(IRHostProcessService processService
+            , IApplicationLifetime applicationLifetime
+            , IOptions<LoggingOptions> loggingOptions
+            , ILogger<Session> sessionLogger
+            , ILogger<MessagePipe> messageLogger
+            , ILogger<Process> hostOutputLogger) {
+
             _loggingOptions = loggingOptions.Value;
+            _processService = processService;
+            _applicationLifetime = applicationLifetime;
             _sessionLogger = sessionLogger;
 
             if (_loggingOptions.LogPackets) {
@@ -72,8 +74,7 @@ namespace Microsoft.R.Host.Broker.Sessions {
                     }
                 }
                 _blockedUsers.Add(user.Name);
-
-                return new UserSessionCreationBlocker(this, user);
+                return Disposable.Create(() => UnblockSessionCreationForUser(user));
             }
         }
 
@@ -111,9 +112,9 @@ namespace Microsoft.R.Host.Broker.Sessions {
             }
         }
 
-        public Session CreateSession(IIdentity user, string id, Interpreter interpreter, string profilePath, string commandLineArguments, bool isInteractive) {
+        public Session CreateSession(ClaimsPrincipal principal, string id, Interpreter interpreter, string commandLineArguments, bool isInteractive) {
             Session session;
-
+            IIdentity user = principal.Identity;
             lock (_sessions) {
                 if (_blockedUsers.Contains(user.Name)) {
                     throw new InvalidOperationException(Resources.Error_BlockedByProfileDeletion.FormatInvariant(user.Name));
@@ -129,14 +130,13 @@ namespace Microsoft.R.Host.Broker.Sessions {
                 }
 
                 var userSessions = GetOrCreateSessionList(user);
-                session = new Session(this, user, id, interpreter, commandLineArguments, isInteractive, _sessionLogger, _messageLogger);
+                session = new Session(this, _processService, _applicationLifetime, _sessionLogger, _messageLogger, principal, interpreter, id, commandLineArguments, isInteractive);
                 session.StateChanged += Session_StateChanged;
 
                 userSessions.Add(session);
             }
 
             session.StartHost(
-                profilePath,
                 _loggingOptions.LogFolder,
                 _loggingOptions.LogHostOutput ? _hostOutputLogger : null,
                 _loggingOptions.LogPackets || _loggingOptions.LogHostOutput ? LogVerbosity.Traffic : LogVerbosity.Minimal);
@@ -155,19 +155,6 @@ namespace Microsoft.R.Host.Broker.Sessions {
                         _sessions.Remove(session.User.Name);
                     }
                 }
-            }
-        }
-
-        private class UserSessionCreationBlocker : IDisposable {
-            private readonly SessionManager _sessionManager;
-            private readonly IIdentity _user;
-            public UserSessionCreationBlocker(SessionManager sessionManager, IIdentity user) {
-                _sessionManager = sessionManager;
-                _user = user;
-            }
-
-            public void Dispose() {
-                _sessionManager.UnblockSessionCreationForUser(_user);
             }
         }
     }

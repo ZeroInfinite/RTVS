@@ -7,11 +7,11 @@ using System.IO.Compression;
 using System.Collections.Generic;
 using Microsoft.Common.Core;
 using Microsoft.Common.Core.IO;
-using Microsoft.Common.Core.Shell;
 using System.Threading.Tasks;
 using System.Linq;
 using System.Threading;
 using static System.FormattableString;
+using Microsoft.Common.Core.UI;
 
 namespace Microsoft.R.Host.Client {
     public sealed class DataTransferSession : IDisposable {

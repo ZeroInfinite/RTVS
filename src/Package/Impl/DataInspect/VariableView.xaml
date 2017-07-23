@@ -10,17 +10,17 @@
              xmlns:core="clr-namespace:System;assembly=mscorlib"
              xmlns:wpf="clr-namespace:Microsoft.Common.Wpf;assembly=Microsoft.R.Common.Wpf"
              xmlns:rwpf="clr-namespace:Microsoft.R.Wpf;assembly=Microsoft.R.Wpf"
+             xmlns:controls="clr-namespace:Microsoft.Common.Wpf.Controls;assembly=Microsoft.R.Common.Wpf"
              wpf:LambdaProperties.ImportedNamespaces="System.Linq Microsoft.VisualStudio.Imaging Microsoft.R.DataInspection"
              mc:Ignorable="d" x:Name="Self"
              d:DesignHeight="300" d:DesignWidth="300"
              Foreground="{DynamicResource {x:Static rwpf:Brushes.WindowTextKey}}"
-             HorizontalAlignment="Stretch"
-             FocusManager.FocusedElement="{Binding ElementName=RootTreeGrid}">
+             HorizontalAlignment="Stretch">
 
     <UserControl.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
-                <ResourceDictionary Source="pack://application:,,,/Microsoft.VisualStudio.R.Package;component/Wpf/Controls.xaml" />
+                <rwpf:CommonResources />
                 <ResourceDictionary Source="DataGridStyle.xaml" />
             </ResourceDictionary.MergedDictionaries>
 
@@ -78,13 +78,11 @@
                         <ColumnDefinition Width="Auto"/>
                         <ColumnDefinition Width="*"/>
                     </Grid.ColumnDefinitions>
-                    <Rectangle x:Name="Indentation" Grid.Column="0"
-                                   Width="{Binding Depth, Converter={StaticResource MultiplyConverter}, ConverterParameter={StaticResource ExpanderToggleSize}}" />
-                    <ToggleButton x:Name="Expander"
-                              Grid.Column="1"
-                              Style="{StaticResource ExpanderToggleStyle}"
-                              ClickMode="Press" IsChecked="{Binding IsExpanded, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" 
-                              AutomationProperties.Name="{x:Static pkg:Resources.VariableExplorer_ExpandVariable}"/>
+                    <Rectangle x:Name="Indentation" Grid.Column="0" Width="{Binding Depth, Converter={StaticResource MultiplyConverter}, ConverterParameter={StaticResource ExpanderToggleSize}}" />
+
+                    <controls:ExpandCollapseButton x:Name="Expander" Grid.Column="1" Style="{StaticResource ExpandCollapseButtonStyle}"
+                                                   IsExpanded="{Binding IsExpanded, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" 
+                                                   AutomationProperties.Name="{x:Static pkg:Resources.VariableExplorer_ExpandVariable}"/>
                     <imaging:CrispImage Grid.Column="2" Width="16" Height="16" Opacity="0.5"
                                         Moniker="{Binding Model.Content.DebugEvaluation, Converter={wpf:Lambda '(IREvaluationResultInfo info) => GetVariableIcon(info)'}}">
                         <imaging:CrispImage.ToolTip>
@@ -119,9 +117,9 @@
                                 <Style.Triggers>
                                     <Trigger Property="IsMouseOver" Value="true">
                                         <Setter Property="BorderBrush"
-                                Value="{DynamicResource {x:Static rwpf:Brushes.ToolWindowButtonHoverActiveBorderKey}}" />
+                                Value="{DynamicResource {x:Static rwpf:Brushes.ToolWindowButtonHoverActiveBorderBrushKey}}" />
                                         <Setter Property="Background"
-                                Value="{DynamicResource {x:Static rwpf:Brushes.ToolWindowButtonHoverActiveKey}}" />
+                                Value="{DynamicResource {x:Static rwpf:Brushes.ToolWindowButtonHoverActiveBrushKey}}" />
                                     </Trigger>
                                 </Style.Triggers>
                             </Style>
@@ -135,13 +133,17 @@
                         <Button 
                             Visibility="{Binding Model.Content.CanShowDetail, Converter={x:Static rwpf:Converters.FalseIsCollapsed}}"
                             Command="{Binding Model.Content.ShowDetailCommand}" ToolTip="{Binding Model.Content.ShowDetailCommandTooltip}"
-                            VerticalAlignment="Center">
+                            AutomationProperties.Name="{Binding Path=Model.Content.Name, StringFormat={x:Static pkg:Resources.ShowDetailCommandAutomationName}}"
+                            AutomationProperties.HelpText="{Binding Path=Model.Content.Name, StringFormat={x:Static pkg:Resources.ShowDetailCommandAutomationHelpText}}"
+                            VerticalAlignment="Center" Focusable="False">
                             <imaging:CrispImage Width="16" Height="16" Moniker="{x:Static imagecatalog:KnownMonikers.Zoom}"/>
                         </Button>
                         <Button
                             Visibility="{Binding Model.Content.CanShowOpenCsv, Converter={x:Static rwpf:Converters.FalseIsCollapsed}}"
                             Command="{Binding Model.Content.OpenInCsvAppCommand}" ToolTip="{Binding Model.Content.OpenInCsvAppCommandTooltip}"
-                            VerticalAlignment="Center">
+                            AutomationProperties.Name="{Binding Path=Model.Content.Name, StringFormat={x:Static pkg:Resources.OpenCsvAppCommandAutomationName}}"
+                            AutomationProperties.HelpText="{Binding Path=Model.Content.Name, StringFormat={x:Static pkg:Resources.OpenCsvAppCommandAutomationHelpText}}"
+                            VerticalAlignment="Center" Focusable="False">
                             <imaging:CrispImage Width="16" Height="16" Moniker="{x:Static imagecatalog:KnownMonikers.OfficeExcel2013}"/>
                         </Button>
                     </StackPanel>
@@ -150,16 +152,14 @@
         </ResourceDictionary>
     </UserControl.Resources>
 
-    <Grid>
+    <Grid KeyboardNavigation.TabNavigation="Cycle">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
 
-        <ComboBox x:Name="EnvironmentComboBox"
-                  Margin="4"
-                  ItemsSource="{Binding Environments}"
-                  SelectedItem="{Binding SelectedEnvironment}"
+        <ComboBox x:Name="EnvironmentComboBox" Margin="4" TabIndex="1"
+                  ItemsSource="{Binding Environments}" SelectedItem="{Binding SelectedEnvironment}"
                   SelectionChanged="EnvironmentComboBox_SelectionChanged"
                   AutomationProperties.Name="{x:Static pkg:Resources.VariableExplorer_EnvironmentsCombo_AccessibleName}">
             <ComboBox.ItemTemplate>
@@ -171,7 +171,7 @@
                 </DataTemplate>
             </ComboBox.ItemTemplate>
             <ComboBox.ItemContainerStyle>
-                <Style TargetType="{x:Type ComboBoxItem}" BasedOn="{StaticResource {x:Type ComboBoxItem}}">
+                <Style TargetType="{x:Type ComboBoxItem}" BasedOn="{wpf:StyleSetter Style={StaticResource {x:Type ComboBox}}, Property=ItemsControl.ItemContainerStyle}">
                     <Style.Triggers>
                         <DataTrigger Binding="{Binding Name}" Value="{x:Null}">
                             <Setter Property="IsEnabled" Value="False"/>
@@ -190,21 +190,44 @@
         </ComboBox>
 
         <local:TreeGrid x:Name="RootTreeGrid" Grid.Row="1"
-                  AutoGenerateColumns="False"
-                  ScrollViewer.VerticalScrollBarVisibility="Visible"
-                  IsReadOnly="True"
-                  RowHeight="{Binding Path=FontSize, ElementName=Self, Converter={x:Static rwpf:Converters.Scale190}}">
+                        AutoGenerateColumns="False" TabIndex="0" 
+                        ScrollViewer.VerticalScrollBarVisibility="Visible"
+                        IsReadOnly="True" ItemsChanged="OnItemsChanged"
+                        RowHeight="{Binding Path=FontSize, ElementName=Self, Converter={x:Static rwpf:Converters.Scale190}}">
+            <DataGrid.Resources>
+                <Style x:Key="SelectableCellStyle" TargetType="{x:Type DataGridCell}" BasedOn="{StaticResource {x:Type DataGridCell}}">
+                    <Setter Property="KeyboardNavigation.IsTabStop" Value="{Binding Path=IsSelected, RelativeSource={RelativeSource Self}}" />
+                </Style>
+                <Style TargetType="{x:Type DataGridCell}" BasedOn="{StaticResource {x:Type DataGridCell}}">
+                    <Setter Property="KeyboardNavigation.IsTabStop" Value="False" />
+                </Style>
+            </DataGrid.Resources>
             <DataGrid.RowStyle>
                 <Style TargetType="{x:Type DataGridRow}">
+                    <Setter Property="ItemsPanel">
+                        <Setter.Value>
+                            <ItemsPanelTemplate>
+                                <DataGridCellsPanel KeyboardNavigation.IsTabStop="True" KeyboardNavigation.TabIndex="0" Focusable="False"  />
+                            </ItemsPanelTemplate>
+                        </Setter.Value>
+                    </Setter>
                     <EventSetter Event="MouseDoubleClick" Handler="GridRow_MouseDoubleClick" />
                     <EventSetter Event="MouseRightButtonUp" Handler="GridRow_MouseRightButtonUp" />
+                    <EventSetter Event="PreviewKeyDown" Handler="OnPreviewKeyDown" />
+                    <EventSetter Event="PreviewKeyUp" Handler="OnPreviewKeyUp" />
                 </Style>
             </DataGrid.RowStyle>
             <DataGrid.Columns>
                 <DataGridTemplateColumn x:Name="NameColumn" Header="{x:Static pkg:Resources.VariableExplorer_NameHeader}" CellTemplate="{StaticResource NameCellTemplate}"
-                                        Width="2*" 
-                                        CanUserSort="True" SortMemberPath="DummyValue" />
-                <DataGridTemplateColumn x:Name="ValueColumn" Header="{x:Static pkg:Resources.VariableExplorer_ValueHeader}" CellTemplate="{StaticResource ValueCellTemplate}" Width="3*" CanUserSort="False" />
+                                        Width="2*" CellStyle="{StaticResource SelectableCellStyle}" CanUserSort="True" SortMemberPath="DummyValue">
+                    <DataGridTemplateColumn.HeaderStyle>
+                        <Style TargetType="{x:Type DataGridColumnHeader}" BasedOn="{StaticResource {x:Type DataGridColumnHeader}}">
+                            <Setter Property="Focusable" Value="True" />
+                        </Style>
+                    </DataGridTemplateColumn.HeaderStyle>
+                </DataGridTemplateColumn>
+                <DataGridTemplateColumn x:Name="ValueColumn" Header="{x:Static pkg:Resources.VariableExplorer_ValueHeader}" CellTemplate="{StaticResource ValueCellTemplate}"
+                                        Width="3*" CanUserSort="False" />
             </DataGrid.Columns>
         </local:TreeGrid>
     </Grid>

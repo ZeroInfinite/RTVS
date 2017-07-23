@@ -5,8 +5,9 @@
                     xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
                     xmlns:wpf="clr-namespace:Microsoft.R.Wpf"
                     xmlns:selectors="clr-namespace:Microsoft.Common.Wpf.Selectors;assembly=Microsoft.R.Common.Wpf"
-                    xmlns:imaging="clr-namespace:Microsoft.VisualStudio.Imaging;assembly=Microsoft.VisualStudio.Imaging"
                     xmlns:imagecatalog="clr-namespace:Microsoft.VisualStudio.Imaging;assembly=Microsoft.VisualStudio.ImageCatalog"
+                    xmlns:controls="clr-namespace:Microsoft.Common.Wpf.Controls;assembly=Microsoft.R.Common.Wpf"
+                    xmlns:rcontrols="clr-namespace:Microsoft.R.Wpf.Controls"
                     mc:Ignorable="d">
     <!--Icons-->
     <PathGeometry FillRule="NonZero" x:Key="ArrowRigth10" Figures="M0,0 L5,5 L0,10 z" />
@@ -30,7 +31,7 @@
                     <GeometryDrawing Brush="#00FFFFFF" Geometry="F1M16,16L0,16 0,0 16,0z" />
                     <GeometryDrawing Geometry="F1M6.5,4 L10.5,8 L6.5,12 z">
                         <GeometryDrawing.Pen>
-                            <Pen Brush="{DynamicResource {x:Static wpf:Brushes.ToolWindowTextKey}}" Thickness="1" />
+                            <Pen Brush="{DynamicResource {x:Static wpf:Brushes.ToolWindowTextBrushKey}}" Thickness="1" />
                         </GeometryDrawing.Pen>
                     </GeometryDrawing>
                 </DrawingGroup.Children>
@@ -43,9 +44,9 @@
             <DrawingGroup>
                 <DrawingGroup.Children>
                     <GeometryDrawing Brush="#00FFFFFF" Geometry="F1M16,16L0,16 0,0 16,0z" />
-                    <GeometryDrawing Geometry="F1M6,3 L11,8 L6,13 z">
+                    <GeometryDrawing Geometry="F1M6.5,4 L10.5,8 L6.5,12 z">
                         <GeometryDrawing.Pen>
-                            <Pen Brush="{DynamicResource {x:Static wpf:Brushes.ActiveBorderKey}}" Thickness="1" />
+                            <Pen Brush="{DynamicResource {x:Static wpf:Brushes.TreeViewSelectedItemActiveBrushKey}}" Thickness="1" />
                         </GeometryDrawing.Pen>
                     </GeometryDrawing>
                 </DrawingGroup.Children>
@@ -58,7 +59,7 @@
             <DrawingGroup>
                 <DrawingGroup.Children>
                     <GeometryDrawing Brush="#00FFFFFF" Geometry="F1M16,16L0,16 0,0 16,0z" />
-                    <GeometryDrawing Brush="{DynamicResource {x:Static wpf:Brushes.UITextKey}}" Geometry="F1M5,11 L11,11 L11,5 z" />
+                    <GeometryDrawing Brush="{DynamicResource {x:Static wpf:Brushes.ToolWindowTextBrushKey}}" Geometry="F1M5,11 L11,11 L11,5 z" />
                 </DrawingGroup.Children>
             </DrawingGroup>
         </DrawingBrush.Drawing>
@@ -240,24 +241,46 @@
         </Setter>
         <Setter Property="Background" Value="Transparent" />
         <Setter Property="BorderBrush" Value="Transparent" />
+        <Setter Property="FocusVisualStyle">
+            <Setter.Value>
+                <Style>
+                    <Setter Property="Control.Template">
+                        <Setter.Value>
+                            <ControlTemplate>
+                                <Border>
+                                    <Rectangle Stroke="{DynamicResource {x:Static wpf:Brushes.WindowTextKey}}" StrokeDashArray="1 2" StrokeThickness="1" Margin="2" SnapsToDevicePixels="true"/>
+                                </Border>
+                            </ControlTemplate>
+                        </Setter.Value>
+                    </Setter>
+                </Style>
+            </Setter.Value>
+        </Setter>
         <Style.Triggers>
+            <Trigger Property="IsKeyboardFocused" Value="True">
+                <Setter Property="Background" Value="{DynamicResource {x:Static wpf:Brushes.ToolWindowButtonHoverActiveBrushKey}}" />
+                <Setter Property="BorderBrush" Value="{DynamicResource {x:Static wpf:Brushes.ToolWindowButtonHoverActiveBorderBrushKey}}" />
+                <Setter Property="Foreground" Value="{DynamicResource {x:Static wpf:Brushes.ToolWindowButtonHoverActiveGlyphBrushKey}}" />
+            </Trigger>
             <Trigger Property="IsMouseOver" Value="True">
-                <Setter Property="Background" Value="{DynamicResource {x:Static wpf:Brushes.ToolWindowButtonHoverActiveKey}}" />
-                <Setter Property="BorderBrush" Value="{DynamicResource {x:Static wpf:Brushes.ToolWindowButtonHoverActiveBorderKey}}" />
+                <Setter Property="Background" Value="{DynamicResource {x:Static wpf:Brushes.ToolWindowButtonHoverActiveBrushKey}}" />
+                <Setter Property="BorderBrush" Value="{DynamicResource {x:Static wpf:Brushes.ToolWindowButtonHoverActiveBorderBrushKey}}" />
+                <Setter Property="Foreground" Value="{DynamicResource {x:Static wpf:Brushes.ToolWindowButtonHoverActiveGlyphBrushKey}}" />
             </Trigger>
             <Trigger Property="IsPressed" Value="True">
-                <Setter Property="Background" Value="{DynamicResource {x:Static wpf:Brushes.ToolWindowButtonDownKey}}" />
-                <Setter Property="BorderBrush" Value="{DynamicResource {x:Static wpf:Brushes.ToolWindowButtonDownBorderKey}}" />
+                <Setter Property="Background" Value="{DynamicResource {x:Static wpf:Brushes.ToolWindowButtonDownBrushKey}}" />
+                <Setter Property="BorderBrush" Value="{DynamicResource {x:Static wpf:Brushes.ToolWindowButtonDownBorderBrushKey}}" />
+                <Setter Property="Foreground" Value="{DynamicResource {x:Static wpf:Brushes.ToolWindowButtonDownActiveGlyphBrushKey}}" />
             </Trigger>
         </Style.Triggers>
     </Style>
 
-    <Style x:Key="ExpandCollapseToggleStyle" TargetType="{x:Type ToggleButton}">
+    <Style x:Key="ExpandCollapseButtonStyle" TargetType="{x:Type controls:ExpandCollapseButton}">
         <Setter Property="Background" Value="Transparent"/>
         <Setter Property="Foreground" Value="{DynamicResource {x:Static wpf:Brushes.UITextKey}}"/>
         <Setter Property="Template">
             <Setter.Value>
-                <ControlTemplate TargetType="{x:Type ToggleButton}">
+                <ControlTemplate TargetType="{x:Type controls:ExpandCollapseButton}">
                     <Border x:Name="Border" BorderThickness="0,1,0,0" BorderBrush="{DynamicResource {x:Static wpf:Brushes.ControlKey}}">
                         <StackPanel Orientation="Horizontal" Background="{TemplateBinding Background}">
                             <Rectangle x:Name="Collapsed" Fill="{StaticResource IconArrowRigth16}" Height="16" Width="16" />
@@ -267,7 +290,7 @@
                     </Border>
 
                     <ControlTemplate.Triggers>
-                        <Trigger Property="IsChecked" Value="True">
+                        <Trigger Property="IsExpanded" Value="True">
                             <Setter TargetName="Collapsed" Property="Visibility" Value="Collapsed"/>
                             <Setter TargetName="Expanded" Property="Visibility" Value="Visible"/>
                         </Trigger>
@@ -283,6 +306,21 @@
                 <DataTemplate>
                     <TextBlock TextTrimming="CharacterEllipsis" Text="{Binding}" FontWeight="SemiBold" />
                 </DataTemplate>
+            </Setter.Value>
+        </Setter>
+        <Setter Property="FocusVisualStyle">
+            <Setter.Value>
+                <Style>
+                    <Setter Property="Control.Template">
+                        <Setter.Value>
+                            <ControlTemplate>
+                                <Border>
+                                    <Rectangle Stroke="{DynamicResource {x:Static wpf:Brushes.WindowTextKey}}" StrokeDashArray="1 2" StrokeThickness="1" Margin="2,2,2,-2" SnapsToDevicePixels="true"/>
+                                </Border>
+                            </ControlTemplate>
+                        </Setter.Value>
+                    </Setter>
+                </Style>
             </Setter.Value>
         </Setter>
     </Style>
@@ -307,6 +345,19 @@
                         </MultiTrigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+        <Setter Property="FocusVisualStyle">
+            <Setter.Value>
+                <Style>
+                    <Setter Property="Control.Template">
+                        <Setter.Value>
+                            <ControlTemplate>
+                                <Rectangle SnapsToDevicePixels="true" Margin="0" Stroke="{DynamicResource {x:Static wpf:Brushes.WindowTextKey}}" StrokeDashArray="1 2" StrokeThickness="1"/>
+                            </ControlTemplate>
+                        </Setter.Value>
+                    </Setter>
+                </Style>
             </Setter.Value>
         </Setter>
         <Style.Triggers>
@@ -396,7 +447,7 @@
         </Setter>
     </Style>
 
-    <Style TargetType="{x:Type wpf:IconWithOverlay}" x:Key="ConnectionStyle">
+    <Style TargetType="{x:Type rcontrols:IconWithOverlay}" x:Key="ConnectionStyle">
         <Style.Triggers>
             <MultiDataTrigger>
                 <MultiDataTrigger.Conditions>

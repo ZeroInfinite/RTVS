@@ -4,9 +4,12 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
+using System.Linq;
 using System.Threading.Tasks;
 using FluentAssertions;
-using Microsoft.Common.Core.Test.Fixtures;
+using Microsoft.Common.Core;
+using Microsoft.Common.Core.Services;
+using Microsoft.R.Components.InteractiveWorkflow;
 using Microsoft.R.Host.Client;
 using Microsoft.R.Host.Client.Session;
 using Microsoft.R.Host.Client.Test.Script;
@@ -28,17 +31,25 @@ namespace Microsoft.VisualStudio.R.Interactive.Test.Data {
             public override string ToString() => $"[{Y}, {X}] = {Value}";
         }
 
+        private readonly IServiceContainer _services;
         private readonly IRSessionProvider _sessionProvider;
         private readonly IRSession _session;
 
-        public GridDataTest(CoreServicesFixture coreServices, TestMethodFixture testMethod) {
-            _sessionProvider = new RSessionProvider(coreServices);
+        public GridDataTest(IServiceContainer services, TestMethodFixture testMethod) {
+            _services = services;
+            _sessionProvider = new RSessionProvider(services);
             _session = _sessionProvider.GetOrCreate(testMethod.FileSystemSafeName);
         }
 
         public async Task InitializeAsync() {
             await _sessionProvider.TrySwitchBrokerAsync(GetType().Name);
             await _session.StartHostAsync(new RHostStartupInfo(), new RHostClientTestApp(), 50000);
+
+            var workflow = _services.GetService<IRInteractiveWorkflowProvider>().GetOrCreate();
+            var packages = await workflow.Packages.GetInstalledPackagesAsync();
+            if (!packages.Any(p => p.Package.EqualsIgnoreCase("QuantMod"))) {
+                await workflow.Packages.InstallPackageAsync("QuantMod", null);
+            }
         }
 
         public async Task DisposeAsync() {
@@ -81,7 +92,7 @@ namespace Microsoft.VisualStudio.R.Interactive.Test.Data {
 
         /// <summary>
         /// Runs <c>rtvs:::grid_data</c> for <paramref name="expression"/>, and validates that
-        /// returned data matches expectations.
+        /// returned data matches expectations. Requires quantmod package preinstalled.
         /// </summary>
         /// <param name="expression">Expression to produce a data structure to retrieve grid data from.</param>
         /// <param name="firstRow">First row which should be retrieved; 1-based (as in R).</param>
@@ -335,5 +346,43 @@ namespace Microsoft.VisualStudio.R.Interactive.Test.Data {
             { "[1,]",   "1",                "3" },
             { "[2,]",   "<externalptr> ",    "4" },
         });
+
+        [Test]
+        [Category.R.DataGrid]
+        public Task TimeseriesVectorGrid() => Test("ts(c(1,2,3,4,5,6), start=2000, frequency=4)", 1, 1, new[,] {
+            { null,      "[]" },
+            { "2000.00", "1" },
+            { "2000.25", "2" },
+            { "2000.50", "3" },
+            { "2000.75", "4" },
+            { "2001.00", "5" },
+            { "2001.25", "6" },
+        });
+
+        [Test]
+        [Category.R.DataGrid]
+        public Task TimeseriesMatrixGrid() => Test("ts(matrix(c(1,2,3,4,5,6), ncol=2), start=2000, frequency=4)", 1, 1, new[,] {
+            { null,      "Series 1", "Series 2" },
+            { "2000.00", "1",    "4" },
+            { "2000.25", "2",    "5" },
+            { "2000.50", "3",    "6" },
+        });
+
+        [Test]
+        [Category.R.DataGrid]
+        public async Task QuantmodGrid() {
+            try {
+                await _session.EvaluateAsync("quantmod::getSymbols", REvaluationKind.NoResult);
+            } catch (REvaluationException) {
+                Assert.True(false, "quantmod package is not installed");
+            }
+
+            await Test("quantmod::getSymbols('MSFT', auto.assign=FALSE)['2016-03-23::2016-03-28']", 1, 1, new[,] {
+                { null,         "MSFT.Open", "MSFT.High", "MSFT.Low", "MSFT.Close", "MSFT.Volume", "MSFT.Adjusted" },
+                { "2016-03-23", "54.11",     "54.24",     "53.74",    "53.97",      "20129000",    "52.58695" },
+                { "2016-03-24", "53.84",     "54.33",     "53.73",    "54.21",      "19950000",    "52.82079" },
+                { "2016-03-28", "54.21",     "54.29",     "53.33",    "53.54",      "17025100",    "52.16797" },
+            });
+        }
     }
 }

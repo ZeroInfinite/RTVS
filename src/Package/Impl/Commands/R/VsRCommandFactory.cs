@@ -4,7 +4,8 @@
 using System.Collections.Generic;
 using System.ComponentModel.Composition;
 using Microsoft.Common.Core;
-using Microsoft.Languages.Editor.Controller;
+using Microsoft.Common.Core.UI.Commands;
+using Microsoft.Languages.Editor.Controllers.Commands;
 using Microsoft.R.Components.ContentTypes;
 using Microsoft.R.Components.InteractiveWorkflow;
 using Microsoft.VisualStudio.R.Package.Repl.Commands;
@@ -17,10 +18,10 @@ namespace Microsoft.VisualStudio.R.Package.Commands.R {
     [Export(typeof(ICommandFactory))]
     [ContentType(RContentTypeDefinition.ContentType)]
     internal class VsRCommandFactory : ICommandFactory {
-        private readonly IRInteractiveWorkflowProvider _workflowProvider;
+        private readonly IRInteractiveWorkflowVisualProvider _workflowProvider;
 
         [ImportingConstructor]
-        public VsRCommandFactory(IRInteractiveWorkflowProvider workflowProvider) {
+        public VsRCommandFactory(IRInteractiveWorkflowVisualProvider workflowProvider) {
             _workflowProvider = workflowProvider;
         }
 
@@ -33,10 +34,10 @@ namespace Microsoft.VisualStudio.R.Package.Commands.R {
             }
 
             return new ICommand[] {
-                new ShowContextMenuCommand(textView, RGuidList.RPackageGuid, RGuidList.RCmdSetGuid, (int) RContextMenuId.R),
+                new ShowContextMenuCommand(textView, RGuidList.RPackageGuid, RGuidList.RCmdSetGuid, (int) RContextMenuId.R, workflow.Shell.Services),
                 new SendToReplCommand(textView, workflow),
-                new ClearReplCommand(textView, _workflowProvider.GetOrCreate()),
-                new GoToFormattingOptionsCommand(textView, textBuffer),
+                new ClearReplCommand(textView, workflow),
+                new GoToFormattingOptionsCommand(textView, workflow.Shell.Services),
                 new WorkingDirectoryCommand(workflow)
             };
         }

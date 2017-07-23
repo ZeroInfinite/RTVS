@@ -5,8 +5,11 @@ using System;
 using System.Diagnostics.CodeAnalysis;
 using FluentAssertions;
 using Microsoft.Common.Core.Test.Telemetry;
-using Microsoft.R.Support.Help;
-using Microsoft.R.Support.Test.Utility;
+using Microsoft.Language.Editor.Test.Settings;
+using Microsoft.R.Components.Test.Stubs;
+using Microsoft.R.Editor;
+using Microsoft.R.Editor.Functions;
+using Microsoft.R.Editor.Settings;
 using Microsoft.UnitTests.Core.XUnit;
 using Microsoft.VisualStudio.R.Package.Telemetry;
 using Microsoft.VisualStudio.Shell.Interop;
@@ -20,6 +23,7 @@ namespace Microsoft.VisualStudio.R.Package.Test.Telemetry {
     [Category.Telemetry]
     public class TelemetryTest {
         private readonly IPackageIndex _packageIndex;
+        private readonly IREditorSettings _settings;
 
         public TelemetryTest() {
             _packageIndex = Substitute.For<IPackageIndex>();
@@ -30,13 +34,15 @@ namespace Microsoft.VisualStudio.R.Package.Test.Telemetry {
             package1.Name.Returns("user_package");
 
             _packageIndex.Packages.Returns(new IPackageInfo[] { package1, package2 });
+
+            _settings = new REditorSettings(new TestSettingsStorage());
         }
 
         [Test]
         public void ReportConfiguration() {
             var svc = new TelemetryTestService();
             string log;
-            using (var t = new RtvsTelemetry(_packageIndex, new TestRToolsSettings(), svc)) {
+            using (var t = new RtvsTelemetry(_packageIndex, new RSettingsStub(), _settings, svc)) {
                 t.ReportConfiguration();
                 log = svc.SessionLog;
             }
@@ -50,7 +56,7 @@ namespace Microsoft.VisualStudio.R.Package.Test.Telemetry {
         public void ReportSettings() {
             var svc = new TelemetryTestService();
             string log;
-            using (var t = new RtvsTelemetry(_packageIndex, new TestRToolsSettings(), svc)) {
+            using (var t = new RtvsTelemetry(_packageIndex, new RSettingsStub(), _settings, svc)) {
                 t.ReportSettings();
                 log = svc.SessionLog;
             }
@@ -89,7 +95,7 @@ namespace Microsoft.VisualStudio.R.Package.Test.Telemetry {
             shell.CreateToolWindow(0, 3, null, ref g, ref p3, ref g, null, "Window#3", null, out frame);
 
             string log;
-            using (var t = new RtvsTelemetry(_packageIndex, new TestRToolsSettings(), svc)) {
+            using (var t = new RtvsTelemetry(_packageIndex, new RSettingsStub(), _settings, svc)) {
                 t.ReportWindowLayout(shell);
                 log = svc.SessionLog;
             }

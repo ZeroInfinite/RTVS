@@ -3,8 +3,7 @@
 
 using System;
 using Microsoft.Common.Core.UI.Commands;
-using Microsoft.Languages.Editor.Controller.Command;
-using Microsoft.R.Components.Controller;
+using Microsoft.Languages.Editor.Controllers.Commands;
 using Microsoft.R.Components.InteractiveWorkflow;
 using Microsoft.VisualStudio.R.Package.Commands;
 using Microsoft.VisualStudio.R.Packages.R;
@@ -12,9 +11,9 @@ using Microsoft.VisualStudio.Text.Editor;
 
 namespace Microsoft.VisualStudio.R.Package.Repl.Commands {
     public sealed class ClearReplCommand : ViewCommand {
-        private readonly IRInteractiveWorkflow _interactiveWorkflow;
+        private readonly IRInteractiveWorkflowVisual _interactiveWorkflow;
 
-        public ClearReplCommand(ITextView textView, IRInteractiveWorkflow interactiveWorkflow) :
+        public ClearReplCommand(ITextView textView, IRInteractiveWorkflowVisual interactiveWorkflow) :
             base(textView, new CommandId(RGuidList.RCmdSetGuid, (int)RPackageCommandId.icmdClearRepl), false) {
             _interactiveWorkflow = interactiveWorkflow;
         }

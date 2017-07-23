@@ -31,17 +31,19 @@ namespace Microsoft.Common.Core {
         public static bool IsOnBackgroundThread() {
             var taskScheduler = TaskScheduler.Current;
             var syncContext = SynchronizationContext.Current;
-            return taskScheduler == TaskScheduler.Default 
+            return taskScheduler == TaskScheduler.Default
+#if NETSTANDARD1_6
+                && (syncContext == null || syncContext.GetType() == typeof(SynchronizationContext));
+#else
                 && (syncContext == null || syncContext.GetType() == typeof(SynchronizationContext) || Thread.CurrentThread.IsThreadPoolThread);
+#endif
         }
 
         /// <summary>
         /// If awaited on a thread with custom scheduler or synchronization context, invokes the continuation
         /// on a background (thread pool) thread. If already on such a thread, await is a no-op.
         /// </summary>
-        public static BackgroundThreadAwaitable SwitchToBackgroundThread() {
-            return new BackgroundThreadAwaitable();
-        }
+        public static BackgroundThreadAwaitable SwitchToBackgroundThread() => new BackgroundThreadAwaitable();
 
         [Conditional("TRACE")]
         public static void AssertIsOnBackgroundThread(

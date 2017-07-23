@@ -10,6 +10,7 @@
 
 namespace Microsoft.R.Host.Client {
     using System;
+    using System.Reflection;
     
     
     /// <summary>
@@ -39,7 +40,7 @@ namespace Microsoft.R.Host.Client {
         internal static global::System.Resources.ResourceManager ResourceManager {
             get {
                 if (object.ReferenceEquals(resourceMan, null)) {
-                    global::System.Resources.ResourceManager temp = new global::System.Resources.ResourceManager("Microsoft.R.Host.Client.Resources", typeof(Resources).Assembly);
+                    global::System.Resources.ResourceManager temp = new global::System.Resources.ResourceManager("Microsoft.R.Host.Client.Resources", typeof(Resources).GetTypeInfo().Assembly);
                     resourceMan = temp;
                 }
                 return resourceMan;
@@ -194,6 +195,15 @@ namespace Microsoft.R.Host.Client {
         internal static string Error_OperationTimedOut {
             get {
                 return ResourceManager.GetString("Error_OperationTimedOut", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Ping to {0}:{1} timed out..
+        /// </summary>
+        internal static string Error_PingTimedOut {
+            get {
+                return ResourceManager.GetString("Error_PingTimedOut", resourceCulture);
             }
         }
         
@@ -395,6 +405,17 @@ namespace Microsoft.R.Host.Client {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Check out Microsoft&apos;s enhanced R distribution at https://aka.ms/mrclient.
+        ///
+        ///.
+        /// </summary>
+        internal static string Message_SuggestMRO {
+            get {
+                return ResourceManager.GetString("Message_SuggestMRO", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Interactive Window is disconnected from R session..
         /// </summary>
         internal static string RHostDisconnected {
@@ -410,6 +431,15 @@ namespace Microsoft.R.Host.Client {
         internal static string RSessionProvider_ConnectionFailed {
             get {
                 return ResourceManager.GetString("RSessionProvider_ConnectionFailed", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to SSL Policy Errors: {0}.
+        /// </summary>
+        internal static string Trace_SSLPolicyErrors {
+            get {
+                return ResourceManager.GetString("Trace_SSLPolicyErrors", resourceCulture);
             }
         }
         

@@ -5,14 +5,14 @@ using System;
 using System.Threading.Tasks;
 using Microsoft.Common.Core;
 using Microsoft.Common.Core.Logging;
-using Microsoft.R.Components.InteractiveWorkflow;
+using Microsoft.Common.Core.Shell;
 using Microsoft.R.Host.Client;
 using Microsoft.VisualStudio.R.Package.Shell;
 using static System.FormattableString;
 
 namespace Microsoft.VisualStudio.R.Package.DataInspect.DataSource {
-    internal sealed class GridDataSource {
-        public static async Task<IGridData<string>> GetGridDataAsync(IRSession rSession, string expression, GridRange? gridRange, ISortOrder sortOrder = null) {
+    internal static class GridDataSource {
+        public static async Task<IGridData<string>> GetGridDataAsync(this IRSession rSession, string expression, GridRange? gridRange, ISortOrder sortOrder = null) {
             await TaskUtilities.SwitchToBackgroundThread();
 
             string rows = gridRange?.Rows.ToRString();
@@ -24,12 +24,9 @@ namespace Microsoft.VisualStudio.R.Package.DataInspect.DataSource {
                 return await rSession.EvaluateAsync<GridData>(expr, REvaluationKind.Normal);
             } catch (RException ex) {
                 var message = Invariant($"Grid data evaluation failed:{Environment.NewLine}{ex.Message}");
-                VsAppShell.Current.Services.Log.Write(LogVerbosity.Normal, MessageCategory.Error, message);
+                VsAppShell.Current.Log().Write(LogVerbosity.Normal, MessageCategory.Error, message);
                 return null;
             }
         }
-
-        public static Task<IGridData<string>> GetGridDataAsync(string expression, GridRange? gridRange, ISortOrder sortOrder = null) =>
-            GetGridDataAsync(VsAppShell.Current.ExportProvider.GetExportedValue<IRInteractiveWorkflowProvider>().GetOrCreate().RSession, expression, gridRange, sortOrder);
     }
 }

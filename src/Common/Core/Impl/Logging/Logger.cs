@@ -3,12 +3,13 @@
 
 using System;
 using System.Globalization;
+using Microsoft.Common.Core.Services;
 
 namespace Microsoft.Common.Core.Logging {
     /// <summary>
     /// Application event logger
     /// </summary>
-    internal sealed class Logger : IActionLog, IDisposable {
+    public sealed class Logger : IActionLog, IDisposable {
         private readonly Lazy<IActionLogWriter[]> _logs;
         private readonly ILoggingPermissions _permissions;
         private readonly string _name;
@@ -24,15 +25,15 @@ namespace Microsoft.Common.Core.Logging {
             }
         }
 
-        internal Logger(IActionLogWriter defaultWriter, ILoggingPermissions permissions) {
+        public Logger(IActionLogWriter defaultWriter, ILoggingPermissions permissions) {
             _writer = defaultWriter;
             _permissions = permissions;
             _logs = Lazy.Create(CreateLogs);
         }
 
-        internal Logger(string name, string folder, ILoggingPermissions permissions) {
+        public Logger(string name, string folder, IServiceContainer services) {
             _name = name;
-            _permissions = permissions;
+            _permissions = services.GetService<ILoggingPermissions>();
             _logs = Lazy.Create(CreateLogs);
             Folder = folder;
         }
@@ -63,18 +64,14 @@ namespace Microsoft.Common.Core.Logging {
         }
 
         #region IActionLog
-        public void Write(LogVerbosity verbosity, MessageCategory category, string message) {
-            _logs.Value[(int)verbosity].Write(category, message);
-        }
+        public void Write(LogVerbosity verbosity, MessageCategory category, string message) => _logs.Value[(int)verbosity].Write(category, message);
 
         public void WriteFormat(LogVerbosity verbosity, MessageCategory category, string format, params object[] arguments) {
             string message = string.Format(CultureInfo.InvariantCulture, format, arguments);
             _logs.Value[(int)verbosity].Write(category, message);
         }
 
-        public void WriteLine(LogVerbosity verbosity, MessageCategory category, string message) {
-            _logs.Value[(int)verbosity].Write(category, message + Environment.NewLine);
-        }
+        public void WriteLine(LogVerbosity verbosity, MessageCategory category, string message) => _logs.Value[(int)verbosity].Write(category, message + Environment.NewLine);
 
         public void Flush() {
             foreach (var l in _logs.Value) {

@@ -69,8 +69,7 @@ namespace Microsoft.VisualStudio.R.Package.DataInspect {
                 var command = await _scrollCommands.ReceiveAsync(cancellationToken);
                 try {
                     batch.Add(command);
-                    if (_scrollCommands.Count > 0
-                        && _scrollCommands.Count < ScrollCommandUpperBound) {
+                    if (_scrollCommands.Count > 0 && _scrollCommands.Count < ScrollCommandUpperBound) {
                         // another command has been queued already. continue to next
                         // upperbound prevents infinite loop in case scroll commands is queued fast and endlessly, which happens only in theory
                         continue;
@@ -98,7 +97,7 @@ namespace Microsoft.VisualStudio.R.Package.DataInspect {
                         batch.Clear();
                     }
                 } catch (Exception ex) {
-                    VsAppShell.Current.Services.Log.Write(LogVerbosity.Normal, MessageCategory.Error, "VisualGridScroller exception: " + ex);
+                    VsAppShell.Current.Log().Write(LogVerbosity.Normal, MessageCategory.Error, "VisualGridScroller exception: " + ex);
                     batch.Clear();
                 }
             }

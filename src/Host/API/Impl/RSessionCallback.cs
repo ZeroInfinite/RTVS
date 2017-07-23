@@ -49,9 +49,12 @@ namespace Microsoft.R.Host.Client {
             => _cb.ShowMessageAsync(message, buttons, cancellationToken);
 
         public Task ViewFile(string fileName, string tabName, bool deleteFile, CancellationToken cancellationToken = default(CancellationToken)) => Task.CompletedTask;
+        public Task<string> EditFileAsync(string expression, string fileName, CancellationToken cancellationToken = default(CancellationToken)) => Task.FromResult(string.Empty);
         public Task ViewLibraryAsync(CancellationToken cancellationToken = default(CancellationToken)) => Task.CompletedTask;
         public Task ViewObjectAsync(string expression, string title, CancellationToken cancellationToken = default(CancellationToken)) => Task.CompletedTask;
 
         public string GetLocalizedString(string id) => null;
+        public Task BeforePackagesInstalledAsync(CancellationToken ct) => Task.CompletedTask;
+        public Task AfterPackagesInstalledAsync(CancellationToken ct) => Task.CompletedTask;
     }
 }

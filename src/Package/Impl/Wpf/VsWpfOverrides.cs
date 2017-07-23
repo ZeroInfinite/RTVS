@@ -30,16 +30,13 @@ namespace Microsoft.VisualStudio.R.Package.Wpf
             OverrideStyleKeys();
         }
 
-        private static void OverrideBrushes()
-        {
-            if (SystemParameters.HighContrast) {
-                return; // Use system theme colors
-            }
-
+        private static void OverrideBrushes() {
             Brushes.ActiveBorderKey = VsBrushes.ActiveBorderKey;
             Brushes.BorderBrushKey = VsBrushes.BrandedUIBorderKey;
-            Brushes.ButtonFaceBrushKey = VsBrushes.ButtonFaceKey;
-            Brushes.ButtonTextBrushKey = VsBrushes.ButtonTextKey;
+            Brushes.ButtonFaceBrushKey = EnvironmentColors.SystemButtonFaceBrushKey;
+            Brushes.ButtonHighlightBrushKey = EnvironmentColors.SystemButtonHighlightBrushKey;
+            Brushes.ButtonShadowBrushKey = EnvironmentColors.SystemButtonShadowBrushKey;
+            Brushes.ButtonTextBrushKey = EnvironmentColors.SystemButtonTextBrushKey;
             Brushes.ComboBoxBorderKey = VsBrushes.ComboBoxBorderKey;
             Brushes.ControlKey = VsBrushes.ThreeDFaceKey;
             Brushes.ControlDarkKey = VsBrushes.ThreeDShadowKey;
@@ -57,13 +54,24 @@ namespace Microsoft.VisualStudio.R.Package.Wpf
             Brushes.SplitterBackgroundKey = VsBrushes.CommandShelfBackgroundGradientKey;
 
             Brushes.ToolWindowBackgroundColorKey = EnvironmentColors.ToolWindowBackgroundColorKey;
-            Brushes.ToolWindowBackgroundKey = EnvironmentColors.ToolWindowBackgroundBrushKey;
-            Brushes.ToolWindowBorderKey = EnvironmentColors.ToolWindowBorderBrushKey;
-            Brushes.ToolWindowButtonDownBorderKey = EnvironmentColors.ToolWindowButtonDownBorderBrushKey;
-            Brushes.ToolWindowButtonDownKey = EnvironmentColors.ToolWindowButtonDownBorderBrushKey;
-            Brushes.ToolWindowButtonHoverActiveBorderKey = EnvironmentColors.ToolWindowButtonHoverActiveBorderBrushKey;
-            Brushes.ToolWindowButtonHoverActiveKey = EnvironmentColors.ToolWindowButtonHoverActiveBorderBrushKey;
-            Brushes.ToolWindowTextKey = EnvironmentColors.ToolWindowTextBrushKey;
+            Brushes.ToolWindowBackgroundBrushKey = EnvironmentColors.ToolWindowBackgroundBrushKey;
+            Brushes.ToolWindowBorderColorKey = EnvironmentColors.ToolWindowBorderColorKey;
+            Brushes.ToolWindowBorderBrushKey = EnvironmentColors.ToolWindowBorderBrushKey;
+            Brushes.ToolWindowButtonActiveGlyphBrushKey = EnvironmentColors.ToolWindowButtonActiveGlyphBrushKey;
+            Brushes.ToolWindowButtonDownBrushKey = EnvironmentColors.ToolWindowButtonDownBrushKey;
+            Brushes.ToolWindowButtonDownActiveGlyphBrushKey = EnvironmentColors.ToolWindowButtonDownActiveGlyphBrushKey;
+            Brushes.ToolWindowButtonDownBorderBrushKey = EnvironmentColors.ToolWindowButtonDownBorderBrushKey;
+            Brushes.ToolWindowButtonDownInactiveGlyphBrushKey = EnvironmentColors.ToolWindowButtonDownInactiveGlyphBrushKey;
+            Brushes.ToolWindowButtonHoverActiveBrushKey = EnvironmentColors.ToolWindowButtonHoverActiveBrushKey;
+            Brushes.ToolWindowButtonHoverActiveBorderBrushKey = EnvironmentColors.ToolWindowButtonHoverActiveBorderBrushKey;
+            Brushes.ToolWindowButtonHoverActiveGlyphBrushKey = EnvironmentColors.ToolWindowButtonHoverActiveGlyphBrushKey;
+            Brushes.ToolWindowButtonHoverInactiveBrushKey = EnvironmentColors.ToolWindowButtonHoverInactiveBrushKey;
+            Brushes.ToolWindowButtonHoverInactiveBorderBrushKey = EnvironmentColors.ToolWindowButtonHoverInactiveBorderBrushKey;
+            Brushes.ToolWindowButtonHoverInactiveGlyphBrushKey = EnvironmentColors.ToolWindowButtonHoverInactiveGlyphBrushKey;
+            Brushes.ToolWindowButtonInactiveBrushKey = EnvironmentColors.ToolWindowButtonInactiveBrushKey;
+            Brushes.ToolWindowButtonInactiveBorderBrushKey = EnvironmentColors.ToolWindowButtonInactiveBorderBrushKey;
+            Brushes.ToolWindowButtonInactiveGlyphBrushKey = EnvironmentColors.ToolWindowButtonInactiveGlyphBrushKey;
+            Brushes.ToolWindowTextBrushKey = EnvironmentColors.ToolWindowTextBrushKey;
 
             Brushes.UITextKey = VsBrushes.BrandedUITextKey;
             Brushes.WindowTextKey = VsBrushes.WindowTextKey;
@@ -121,6 +129,8 @@ namespace Microsoft.VisualStudio.R.Package.Wpf
             Brushes.TreeViewBackgroundTextBrushKey = TreeViewColors.BackgroundTextBrushKey;
             Brushes.TreeViewSelectedItemActiveBrushKey = TreeViewColors.SelectedItemActiveBrushKey;
             Brushes.TreeViewSelectedItemActiveTextBrushKey = TreeViewColors.SelectedItemActiveTextBrushKey;
+            Brushes.TreeViewSelectedItemInactiveBrushKey = TreeViewColors.SelectedItemInactiveBrushKey;
+            Brushes.TreeViewSelectedItemInactiveTextBrushKey = TreeViewColors.SelectedItemInactiveTextBrushKey;
             Brushes.TreeViewGlyphBrushKey = TreeViewColors.GlyphBrushKey;
             Brushes.TreeViewGlyphMouseOverBrushKey = TreeViewColors.GlyphMouseOverBrushKey;
 

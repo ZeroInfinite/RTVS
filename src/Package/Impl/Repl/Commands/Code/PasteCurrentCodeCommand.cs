@@ -2,8 +2,7 @@
 // Licensed under the MIT License. See LICENSE in the project root for license information.
 
 using System;
-using Microsoft.Languages.Editor.Controller.Command;
-using Microsoft.R.Components.Controller;
+using Microsoft.Common.Core.UI.Commands;
 using Microsoft.R.Components.InteractiveWorkflow;
 using Microsoft.VisualStudio.R.Package.Commands;
 using Microsoft.VisualStudio.R.Packages.R;
@@ -13,7 +12,7 @@ using Microsoft.VisualStudio.Text.Editor;
 namespace Microsoft.VisualStudio.R.Package.Repl.Commands {
     class PasteCurrentCodeCommand : RExecuteCommand {
 
-        public PasteCurrentCodeCommand(ITextView textView, IRInteractiveWorkflow interactiveWorkflow) :
+        public PasteCurrentCodeCommand(ITextView textView, IRInteractiveWorkflowVisual interactiveWorkflow) :
             base(textView, interactiveWorkflow, new CommandId(RGuidList.RCmdSetGuid, RPackageCommandId.icmdPasteReplCmd)) {
         }
 

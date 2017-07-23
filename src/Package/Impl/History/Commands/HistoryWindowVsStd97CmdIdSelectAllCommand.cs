@@ -3,11 +3,9 @@
 
 using System;
 using Microsoft.Common.Core.UI.Commands;
-using Microsoft.Languages.Editor.Controller.Command;
-using Microsoft.R.Components.Controller;
+using Microsoft.Languages.Editor.Controllers.Commands;
 using Microsoft.R.Components.History;
 using Microsoft.R.Components.InteractiveWorkflow;
-using Microsoft.VisualStudio.R.Package.Repl;
 using Microsoft.VisualStudio.Text.Editor;
 
 namespace Microsoft.VisualStudio.R.Package.History.Commands {
@@ -17,10 +15,10 @@ namespace Microsoft.VisualStudio.R.Package.History.Commands {
             new CommandId(VSConstants.VSStd2K, (int)VSConstants.VSStd2KCmdID.SELECTALL)
         };
 
-        private readonly IRInteractiveWorkflow _interactiveWorkflow;
+        private readonly IRInteractiveWorkflowVisual _interactiveWorkflow;
         private readonly IRHistory _history;
 
-        public HistoryWindowVsStd97CmdIdSelectAllCommand(ITextView textView, IRHistoryProvider historyProvider, IRInteractiveWorkflow interactiveWorkflow)
+        public HistoryWindowVsStd97CmdIdSelectAllCommand(ITextView textView, IRHistoryProvider historyProvider, IRInteractiveWorkflowVisual interactiveWorkflow)
             : base(textView, SelectAllCommandIds, false) {
             _interactiveWorkflow = interactiveWorkflow;
             _history = historyProvider.GetAssociatedRHistory(textView);

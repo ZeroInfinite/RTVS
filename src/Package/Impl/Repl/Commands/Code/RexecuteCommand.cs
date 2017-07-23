@@ -5,7 +5,7 @@ using System;
 using System.Text;
 using Microsoft.Common.Core;
 using Microsoft.Common.Core.UI.Commands;
-using Microsoft.Languages.Editor.Controller.Command;
+using Microsoft.Languages.Editor.Controllers.Commands;
 using Microsoft.R.Components.InteractiveWorkflow;
 using Microsoft.R.Editor;
 using Microsoft.VisualStudio.Text.Editor;
@@ -13,9 +13,9 @@ using Microsoft.VisualStudio.Text.Editor.OptionsExtensionMethods;
 
 namespace Microsoft.VisualStudio.R.Package.Repl.Commands {
     class RExecuteCommand : ViewCommand {
-        protected IRInteractiveWorkflow InteractiveWorkflow { get; }
+        protected IRInteractiveWorkflowVisual InteractiveWorkflow { get; }
 
-        public RExecuteCommand(ITextView textView, IRInteractiveWorkflow interactiveWorkflow, CommandId id) : base(textView, id, false) {
+        public RExecuteCommand(ITextView textView, IRInteractiveWorkflowVisual interactiveWorkflow, CommandId id) : base(textView, id, false) {
             InteractiveWorkflow = interactiveWorkflow;
         }
 

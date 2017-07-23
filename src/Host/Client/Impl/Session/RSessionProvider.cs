@@ -10,6 +10,7 @@ using System.Threading.Tasks;
 using Microsoft.Common.Core;
 using Microsoft.Common.Core.Disposables;
 using Microsoft.Common.Core.Services;
+using Microsoft.Common.Core.Tasks;
 using Microsoft.Common.Core.Threading;
 using Microsoft.R.Host.Client.Host;
 using Microsoft.R.Host.Protocol;
@@ -22,8 +23,9 @@ namespace Microsoft.R.Host.Client.Session {
         private readonly AsyncReaderWriterLock _connectArwl = new AsyncReaderWriterLock();
 
         private readonly BrokerClientProxy _brokerProxy;
-        private readonly ICoreServices _services;
+        private readonly IServiceContainer _services;
         private readonly IConsole _console;
+        private readonly ITaskService _taskService;
 
         private volatile bool _isConnected;
 
@@ -34,7 +36,7 @@ namespace Microsoft.R.Host.Client.Session {
         public bool HasBroker => _brokerProxy.HasBroker;
 
         public bool IsConnected {
-            get { return _isConnected; }
+            get => _isConnected;
             set {
                 if (_isConnected != value) {
                     _isConnected = value;
@@ -46,16 +48,20 @@ namespace Microsoft.R.Host.Client.Session {
 
         public IBrokerClient Broker => _brokerProxy;
 
+        public event EventHandler BeforeDisposed;
         public event EventHandler BrokerChanging;
         public event EventHandler BrokerChangeFailed;
         public event EventHandler BrokerChanged;
         public event EventHandler<BrokerStateChangedEventArgs> BrokerStateChanged;
         public event EventHandler<HostLoadChangedEventArgs> HostLoadChanged;
 
-        public RSessionProvider(ICoreServices services, IConsole callback = null) {
+        public RSessionProvider(IServiceContainer services, IConsole callback = null) {
             _console = callback ?? new NullConsole();
             _brokerProxy = new BrokerClientProxy();
             _services = services;
+            // Cache task service since we need it during disposal.
+            // This service may be disposed AFTER the service container service is marked as disposed.
+            _taskService = _services.Tasks();
         }
 
         public IRSession GetOrCreate(string sessionId) {
@@ -63,19 +69,21 @@ namespace Microsoft.R.Host.Client.Session {
             return _sessions.GetOrAdd(sessionId, CreateRSession);
         }
 
-        public IEnumerable<IRSession> GetSessions() {
-            return _sessions.Values;
-        }
+        public IEnumerable<IRSession> GetSessions() => _sessions.Values;
 
         public void Dispose() {
             if (!_disposeToken.TryMarkDisposed()) {
                 return;
             }
 
+            try {
+                BeforeDisposed?.Invoke(this, EventArgs.Empty);
+            } catch (Exception ex) when (!ex.IsCriticalException()) { }
+
             var sessions = GetSessions().ToList();
             var stopHostTasks = sessions.Select(session => session.StopHostAsync(false));
             try {
-                _services.Tasks.Wait(Task.WhenAll(stopHostTasks));
+                _taskService.Wait(Task.WhenAll(stopHostTasks));
             } catch (Exception ex) when (!ex.IsCriticalException()) { }
 
             foreach (var session in sessions) {
@@ -92,8 +100,7 @@ namespace Microsoft.R.Host.Client.Session {
         }
 
         private void DisposeSession(string sessionId) {
-            RSession session;
-            if (_sessions.TryRemove(sessionId, out session)) {
+            if (_sessions.TryRemove(sessionId, out var session)) {
                 session.Connected -= RSessionOnConnected;
             }
         }
@@ -102,7 +109,7 @@ namespace Microsoft.R.Host.Client.Session {
             if (_hostLoad == null) {
                 UpdateHostLoadAsync().DoNotWait();
             }
-       }
+        }
 
         private void OnHostLoadChanged(HostLoad hostLoad) {
             Interlocked.Exchange(ref _hostLoad, hostLoad);
@@ -112,9 +119,8 @@ namespace Microsoft.R.Host.Client.Session {
             Task.Run(() => HostLoadChanged?.Invoke(this, args)).DoNotWait();
         }
 
-        private void OnBrokerChanged() {
-            Task.Run(() => BrokerChanged?.Invoke(this, new EventArgs())).DoNotWait();
-        }
+        private void OnBrokerChanged() => Task.Run(() 
+            => BrokerChanged?.Invoke(this, new EventArgs())).DoNotWait();
 
         public async Task TestBrokerConnectionAsync(string name, BrokerConnectionInfo connectionInfo, CancellationToken cancellationToken = default(CancellationToken)) {
             using (_disposeToken.Link(ref cancellationToken)) {
@@ -135,7 +141,7 @@ namespace Microsoft.R.Host.Client.Session {
 
         private static async Task TestBrokerConnectionWithRHost(IBrokerClient brokerClient, CancellationToken cancellationToken) {
             var callbacks = new NullRCallbacks();
-            var connectionInfo = new HostConnectionInfo(nameof(TestBrokerConnectionAsync), callbacks, useRHostCommandLineArguments:true);
+            var connectionInfo = new HostConnectionInfo(nameof(TestBrokerConnectionAsync), callbacks, useRHostCommandLineArguments: true);
             var rhost = await brokerClient.ConnectAsync(connectionInfo, cancellationToken);
             try {
                 var rhostRunTask = rhost.Run(cancellationToken);
@@ -201,7 +207,7 @@ namespace Microsoft.R.Host.Client.Session {
 
                 // First switch broker proxy so that all new sessions are created for the new broker
                 var oldBroker = _brokerProxy.Set(brokerClient);
-                if (_updateHostLoadLoopTask == null) {
+                if (_updateHostLoadLoopTask == null && connectionInfo.FetchHostLoad) {
                     _updateHostLoadLoopTask = UpdateHostLoadLoopAsync();
                 }
 
@@ -336,7 +342,9 @@ namespace Microsoft.R.Host.Client.Session {
 
         private IBrokerClient CreateBrokerClient(string name, BrokerConnectionInfo connectionInfo, CancellationToken cancellationToken) {
             if (!connectionInfo.IsValid) {
-                connectionInfo = BrokerConnectionInfo.Create(connectionInfo.Name, new RInstallation().GetCompatibleEngines().FirstOrDefault()?.InstallPath);
+                var installSvc = _services.GetService<IRInstallationService>();
+                var path = installSvc.GetCompatibleEngines().FirstOrDefault()?.InstallPath;
+                connectionInfo = BrokerConnectionInfo.Create(_services.Security(), connectionInfo.Name, path, null, false);
             }
 
             if (!connectionInfo.IsValid) {
@@ -345,7 +353,7 @@ namespace Microsoft.R.Host.Client.Session {
 
             if (connectionInfo.IsRemote) {
                 return new RemoteBrokerClient(name, connectionInfo, _services, _console, cancellationToken);
-            } 
+            }
 
             return new LocalBrokerClient(name, connectionInfo, _services, _console);
         }

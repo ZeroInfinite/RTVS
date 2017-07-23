@@ -4,7 +4,7 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
-using Microsoft.Common.Core.Shell;
+using Microsoft.Common.Core.UI;
 
 namespace Microsoft.R.Host.Client {
     /// <summary>
@@ -77,10 +77,17 @@ namespace Microsoft.R.Host.Client {
         Task ViewFile(string fileName, string tabName, bool deleteFile, CancellationToken cancellationToken = default(CancellationToken));
 
         /// <summary>
+        /// Edits file or deparsed object
+        /// </summary>
+        Task<string> EditFileAsync(string content, string fileName, CancellationToken cancellationToken = default(CancellationToken));
+
+        /// <summary>
         /// Saves data to file sent from RHost.
         /// </summary>
         Task<string> FetchFileAsync(string remoteFileName, ulong remoteBlobId, string localPath, CancellationToken cancellationToken);
 
         string GetLocalizedString(string id);
+        Task BeforePackagesInstalledAsync(CancellationToken cancellationToken);
+        Task AfterPackagesInstalledAsync(CancellationToken cancellationToken);
     }
 }

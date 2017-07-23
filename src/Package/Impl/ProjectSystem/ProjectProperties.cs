@@ -8,14 +8,10 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.Common.Core;
 using Microsoft.Common.Core.IO;
+using Microsoft.R.Components.Application.Configuration;
 using Microsoft.VisualStudio.ProjectSystem;
 using Microsoft.VisualStudio.R.Package.ProjectSystem;
-#if VS14
-using Microsoft.VisualStudio.ProjectSystem.Utilities;
-#endif
-#if VS15
 using Microsoft.VisualStudio.ProjectSystem.Properties;
-#endif
 
 namespace Microsoft.VisualStudio.R.Package {
     [Export(typeof(ProjectProperties))]
@@ -26,7 +22,7 @@ namespace Microsoft.VisualStudio.R.Package {
         [ImportingConstructor]
         public ProjectProperties(ConfiguredProject configuredProject)
             : base(configuredProject) {
-            _fileSystem = new FileSystem();
+            _fileSystem = new WindowsFileSystem();
         }
 
         /// <summary>

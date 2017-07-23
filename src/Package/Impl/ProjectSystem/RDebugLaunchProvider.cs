@@ -9,6 +9,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Common.Core;
 using Microsoft.Common.Core.IO;
+using Microsoft.Common.Core.Shell;
 using Microsoft.Extensions.FileSystemGlobbing;
 using Microsoft.R.Components.InteractiveWorkflow;
 using Microsoft.R.Debugger;
@@ -16,20 +17,10 @@ using Microsoft.R.Debugger.PortSupplier;
 using Microsoft.R.Host.Client;
 using Microsoft.R.Host.Client.Extensions;
 using Microsoft.R.Host.Client.Host;
-using Microsoft.VisualStudio.InteractiveWindow;
 using Microsoft.VisualStudio.ProjectSystem;
-using Microsoft.Common.Core.Shell;
-using Microsoft.VisualStudio.R.Package.Shell;
-#if VS14
-using Microsoft.VisualStudio.ProjectSystem.Debuggers;
-using Microsoft.VisualStudio.ProjectSystem.Utilities;
-using Microsoft.VisualStudio.ProjectSystem.Utilities.DebuggerProviders;
-using Microsoft.VisualStudio.ProjectSystem.VS.Debuggers;
-#else
 using Microsoft.VisualStudio.ProjectSystem.Debug;
 using Microsoft.VisualStudio.ProjectSystem.VS.Debug;
-#endif
-using static System.FormattableString;
+
 
 namespace Microsoft.VisualStudio.R.Package.ProjectSystem {
     // ExportDebugger must match rule name in ..\Rules\Debugger.xaml.
@@ -37,18 +28,20 @@ namespace Microsoft.VisualStudio.R.Package.ProjectSystem {
     [AppliesTo(ProjectConstants.RtvsProjectCapability)]
     internal class RDebugLaunchProvider : DebugLaunchProviderBase {
         private readonly ProjectProperties _properties;
-        private readonly IRInteractiveWorkflow _interactiveWorkflow;
+        private readonly IRInteractiveWorkflowVisual _interactiveWorkflow;
         private readonly IProjectSystemServices _pss;
+        private readonly IFileSystem _fs;
 
         [ImportingConstructor]
-        public RDebugLaunchProvider(ConfiguredProject configuredProject, IRInteractiveWorkflowProvider interactiveWorkflowProvider, IProjectSystemServices pss)
+        public RDebugLaunchProvider(ConfiguredProject configuredProject, IRInteractiveWorkflowVisualProvider interactiveWorkflowProvider, IProjectSystemServices pss)
             : base(configuredProject) {
             _properties = configuredProject.Services.ExportProvider.GetExportedValue<ProjectProperties>();
             _interactiveWorkflow = interactiveWorkflowProvider.GetOrCreate();
             _pss = pss;
+            _fs = _interactiveWorkflow.Shell.FileSystem();
         }
 
-        internal IFileSystem FileSystem { get; set; } = new FileSystem();
+        private IFileSystem FileSystem => _fs;
 
         private IRSession Session => _interactiveWorkflow.RSession;
 
